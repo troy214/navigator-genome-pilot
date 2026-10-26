@@ -1,0 +1,19 @@
+[Unit]
+Description=Navigator Genome Pilot demo app (FastAPI/uvicorn)
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/home/ubuntu
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/navigator-genome-pilot
+Environment=PYTHONUNBUFFERED=1
+# Dev provider is used automatically when META_MODEL_API_KEY is unset.
+# ABACUS_API_KEY is the dev endpoint key; load it from the login profile snapshot.
+EnvironmentFile=-/home/ubuntu/navigator-genome-pilot/deploy/navigator.env
+ExecStart=/opt/abacus-python/bin/python3 -m uvicorn app.backend.main:app --host 127.0.0.1 --port 8077
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

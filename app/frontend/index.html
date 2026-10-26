@@ -5,45 +5,163 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Navigator Genome Pilot — Demo</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1115; color: #e6e6e6; }
-    header { padding: 16px 24px; border-bottom: 1px solid #262b33; }
-    header h1 { font-size: 18px; margin: 0; }
-    .notice { font-size: 12px; color: #9aa4b2; margin-top: 4px; }
-    main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 24px; }
-    .panel { background: #161a21; border: 1px solid #262b33; border-radius: 10px; padding: 16px; }
-    .agents { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .agent { background: #1b2029; border: 1px solid #2b313b; border-radius: 10px; padding: 12px; }
-    .agent .dot { width: 8px; height: 8px; border-radius: 50%; background: #5b6472; display: inline-block; margin-right: 6px; }
-    .agent small { color: #9aa4b2; }
-    h2 { font-size: 14px; color: #c7cfdb; }
+    :root { --bg:#0f1115; --panel:#161a21; --panel2:#1b2029; --line:#262b33; --muted:#9aa4b2;
+            --accent:#4c8bf5; --green:#3fb950; --amber:#d29922; --red:#f85149; --text:#e6e6e6; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin:0; background:var(--bg); color:var(--text); }
+    header { padding:16px 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+    header h1 { font-size:18px; margin:0; }
+    .pill { font-size:11px; padding:3px 8px; border-radius:20px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); }
+    .notice { width:100%; font-size:12px; color:var(--amber); margin-top:4px; }
+    .controls { padding:16px 24px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+    select, button { font-size:13px; padding:8px 12px; border-radius:8px; border:1px solid var(--line); background:var(--panel2); color:var(--text); }
+    button.primary { background:var(--accent); border-color:var(--accent); color:#fff; cursor:pointer; font-weight:600; }
+    button.primary:disabled { opacity:.5; cursor:not-allowed; }
+    main { padding:20px 24px; display:grid; gap:16px; }
+    .agents { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .agent { background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:12px; min-height:92px; }
+    .agent .row { display:flex; align-items:center; gap:8px; }
+    .dot { width:9px; height:9px; border-radius:50%; background:#5b6472; flex:none; }
+    .dot.working { background:var(--amber); animation:pulse 1s infinite; }
+    .dot.done { background:var(--green); }
+    .dot.degraded { background:var(--amber); }
+    .dot.error { background:var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .agent b { font-size:13px; } .agent small { color:var(--muted); display:block; margin-top:6px; font-size:11px; line-height:1.4; }
+    .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; }
+    h2 { font-size:14px; color:#c7cfdb; margin:0 0 10px; }
+    table { width:100%; border-collapse:collapse; font-size:12px; }
+    th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th { color:var(--muted); font-weight:600; }
+    .tag { font-size:10px; padding:2px 6px; border-radius:4px; border:1px solid var(--line); white-space:nowrap; }
+    .c-high{color:var(--green);} .c-moderate{color:var(--accent);} .c-low{color:var(--amber);} .c-uncertain{color:var(--muted);}
+    .k-verified{background:#132a16;color:var(--green);} .k-implemented{background:#102033;color:var(--accent);}
+    .k-idea{background:#2a230f;color:var(--amber);} .k-unknown{background:#2a1515;color:var(--red);} .k-designed{background:#1c2330;color:var(--muted);}
+    .finding { border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:10px; background:var(--panel2); }
+    .finding h3 { margin:0 0 4px; font-size:14px; }
+    .finding ul { margin:6px 0; padding-left:18px; } .finding li { font-size:11px; color:var(--muted); margin:2px 0; }
+    a.btn { display:inline-block; text-decoration:none; }
+    .muted { color:var(--muted); font-size:12px; }
+    .src { color:var(--muted); font-size:11px; word-break:break-word; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Navigator Genome Pilot</h1>
-    <div class="notice">Research use only — not a diagnostic system and not medical advice. Evidence dossiers for researchers/clinicians, with uncertainty labels.</div>
+    <h1>🧭 Navigator Genome Pilot</h1>
+    <span class="pill" id="provider">provider: …</span>
+    <span class="pill">8-agent evidence pipeline</span>
+    <div class="notice">⚠ Research use only — NOT a diagnostic system and NOT medical advice. Every finding is a hypothesis with explicit uncertainty labels.</div>
   </header>
+
+  <div class="controls">
+    <label class="muted">Case:</label>
+    <select id="caseSelect"></select>
+    <button class="primary" id="runBtn" onclick="runCase()">▶ Run pipeline</button>
+    <span class="muted" id="status"></span>
+  </div>
+
   <main>
-    <section class="agents">
-      <!-- Panel per agent (the "monitor per agent" idea, as tiles). Populated from /run. -->
-      <div class="agent"><span class="dot"></span>1 Intake<br><small>idle</small></div>
-      <div class="agent"><span class="dot"></span>2 Filtering<br><small>idle</small></div>
-      <div class="agent"><span class="dot"></span>3 Phenotype<br><small>idle</small></div>
-      <div class="agent"><span class="dot"></span>4 Literature<br><small>idle</small></div>
-      <div class="agent"><span class="dot"></span>5 Database<br><small>idle</small></div>
-      <div class="agent"><span class="dot"></span>6 Case-Matching<br><small>idle</small></div>
-      <div class="agent"><span class="dot"></span>7 Red Team<br><small>idle</small></div>
-      <div class="agent"><span class="dot"></span>8 Dossier Writer<br><small>idle</small></div>
-    </section>
-    <section class="panel">
-      <h2>Evidence ledger</h2>
-      <div id="ledger"><small>Run a case to populate the evidence ledger.</small></div>
-    </section>
-    <section class="panel">
-      <h2>Evidence dossier</h2>
-      <div id="dossier"><small>The assembled, uncertainty-labeled dossier appears here.</small></div>
+    <section class="agents" id="agents"></section>
+    <section class="grid2">
+      <div class="panel">
+        <h2>Evidence ledger <span class="muted" id="ledgerCount"></span></h2>
+        <div style="max-height:420px; overflow:auto;">
+          <table id="ledger"><thead><tr><th>Claim</th><th>Source</th><th>Conf.</th><th>Knowledge</th></tr></thead>
+          <tbody><tr><td colspan="4" class="muted">Run a case to populate the evidence ledger.</td></tr></tbody></table>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Evidence dossier</h2>
+        <div id="dossierMeta" class="muted">The assembled, uncertainty-labeled dossier appears here.</div>
+        <div id="findings"></div>
+        <div id="dossierActions"></div>
+      </div>
     </section>
   </main>
-  <!-- TODO: fetch('/run', {POST case}) and render agent status + ledger + dossier -->
+
+  <script>
+    const AGENTS = [
+      ["intake","1 Intake"],["filtering","2 Filtering"],["phenotype","3 Phenotype"],
+      ["literature","4 Literature"],["database","5 Database"],["case_matching","6 Case-Matching"],
+      ["red_team","7 Red Team"],["dossier_writer","8 Dossier Writer"]];
+
+    function renderAgents(stateMap){
+      document.getElementById("agents").innerHTML = AGENTS.map(([k,label])=>{
+        const st = stateMap[k] || {status:"idle", note:""};
+        return `<div class="agent"><div class="row"><span class="dot ${st.status}"></span><b>${label}</b></div>
+          <small>${st.status}${st.note? " — "+st.note : ""}</small></div>`;
+      }).join("");
+    }
+
+    async function loadCases(){
+      const h = await (await fetch("/health")).json();
+      document.getElementById("provider").textContent = "provider: " + h.provider;
+      const d = await (await fetch("/cases")).json();
+      const sel = document.getElementById("caseSelect");
+      sel.innerHTML = d.cases.map(c=>`<option value="${c.file}">${c.case_id}</option>`).join("");
+      renderAgents({});
+    }
+
+    async function runCase(){
+      const file = document.getElementById("caseSelect").value;
+      const btn = document.getElementById("runBtn"); btn.disabled = true;
+      const status = document.getElementById("status");
+      status.textContent = "Running 8-agent pipeline (live queries to Europe PMC / ClinVar / gnomAD / HPO)…";
+      // show all agents as working
+      const working = {}; AGENTS.forEach(([k])=>working[k]={status:"working",note:""}); renderAgents(working);
+      try {
+        const res = await fetch("/run/"+encodeURIComponent(file), {method:"POST"});
+        if(!res.ok) throw new Error("HTTP "+res.status);
+        const data = await res.json();
+        renderResult(data);
+        status.textContent = `Done in ${data.total_elapsed_s}s (provider: ${data.provider}).`;
+      } catch(e){
+        status.textContent = "Error: "+e.message;
+        const err={}; AGENTS.forEach(([k])=>err[k]={status:"error",note:""}); renderAgents(err);
+      } finally { btn.disabled = false; }
+    }
+
+    function renderResult(data){
+      const stateMap = {};
+      data.agent_results.forEach(r=>{
+        stateMap[r.agent] = {status:r.status, note:(r.notes||"").slice(0,70)};
+      });
+      renderAgents(stateMap);
+
+      // ledger
+      const rows = data.evidence_ledger || [];
+      document.getElementById("ledgerCount").textContent = `(${rows.length})`;
+      document.querySelector("#ledger tbody").innerHTML = rows.map(e=>`
+        <tr><td>${esc(e.claim)}</td>
+            <td class="src">${esc(e.source)}</td>
+            <td><span class="tag c-${e.confidence}">${e.confidence}</span></td>
+            <td><span class="tag k-${e.knowledge}">${e.knowledge}</span></td></tr>`).join("")
+        || `<tr><td colspan="4" class="muted">No evidence.</td></tr>`;
+
+      // dossier
+      const dsr = data.dossier || {};
+      document.getElementById("dossierMeta").innerHTML =
+        `<b>Case ${esc(dsr.case_id||"")}</b> — ${(dsr.findings||[]).length} ranked candidate hypothesis(es).`
+        + (data.sources_unavailable && data.sources_unavailable.length ?
+           `<div style="color:var(--amber);margin-top:4px;">Sources unavailable: ${data.sources_unavailable.map(esc).join(", ")}</div>` : "");
+      document.getElementById("findings").innerHTML = (dsr.findings||[]).map(f=>`
+        <div class="finding">
+          <h3>#${f.rank} ${esc(f.gene||"?")} ${f.variant?("— "+esc(f.variant)):""}
+            <span class="tag c-${f.confidence}">${f.confidence}</span></h3>
+          <div class="muted">${esc(f.rationale||"")}</div>
+          ${f.supporting&&f.supporting.length?`<div><b style="font-size:11px">Supporting</b><ul>${f.supporting.slice(0,4).map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:""}
+          ${f.contradicting&&f.contradicting.length?`<div><b style="font-size:11px">Contradicting / cautionary</b><ul>${f.contradicting.slice(0,4).map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:""}
+          <div class="muted" style="font-size:11px">Uncertainty: ${esc(f.uncertainty||"")}</div>
+        </div>`).join("");
+      document.getElementById("dossierActions").innerHTML =
+        `<a class="btn" href="/dossier/${encodeURIComponent(dsr.case_id||"")}" target="_blank">
+           <button class="primary">⬇ Download dossier PDF</button></a>
+         <div class="muted" style="margin-top:8px">Research use only — independently verify all findings.</div>`;
+    }
+
+    function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+    loadCases();
+  </script>
 </body>
 </html>
