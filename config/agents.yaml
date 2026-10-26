@@ -1,0 +1,40 @@
+# Agent -> Meta model mapping.
+# NOTE: these are the recommended STARTING allocations to refine during the build,
+# not verified benchmarks. Lighter agents run on open-weight models (cost control +
+# eligibility for the "Best Build on Meta Open Weight Models" bonus).
+
+agents:
+  intake:
+    model: meta-models/muse-spark-open-1026
+    role: "Parse VCF / demo case, normalize variants"
+    isolated: true
+  filtering:
+    model: meta-models/muse-spark-open-1026
+    role: "Reduce candidate variants by frequency / quality"
+    isolated: true
+  phenotype:
+    model: muse-spark
+    role: "Map clinical picture to HPO phenotype terms"
+    isolated: true
+  literature:
+    model: muse-spark
+    role: "Search and summarize relevant publications"
+    isolated: true
+  database:
+    model: meta-models/muse-spark-open-1026
+    role: "Query OMIM / Orphanet / ClinVar / gnomAD"
+    isolated: true
+  case_matching:
+    model: muse-spark
+    role: "Compare case against known solved cases"
+    isolated: true
+  red_team:
+    model: muse-spark
+    role: "Challenge conclusions, flag uncertainty (independent, isolated context)"
+    isolated: true
+  dossier_writer:
+    model: muse-spark
+    role: "Assemble the physician-facing evidence dossier"
+    isolated: true
+
+# Muse Code is used to BUILD the platform, not as a runtime agent.

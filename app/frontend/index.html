@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Navigator Genome Pilot — Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #0f1115; color: #e6e6e6; }
+    header { padding: 16px 24px; border-bottom: 1px solid #262b33; }
+    header h1 { font-size: 18px; margin: 0; }
+    .notice { font-size: 12px; color: #9aa4b2; margin-top: 4px; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 24px; }
+    .panel { background: #161a21; border: 1px solid #262b33; border-radius: 10px; padding: 16px; }
+    .agents { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .agent { background: #1b2029; border: 1px solid #2b313b; border-radius: 10px; padding: 12px; }
+    .agent .dot { width: 8px; height: 8px; border-radius: 50%; background: #5b6472; display: inline-block; margin-right: 6px; }
+    .agent small { color: #9aa4b2; }
+    h2 { font-size: 14px; color: #c7cfdb; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Navigator Genome Pilot</h1>
+    <div class="notice">Research use only — not a diagnostic system and not medical advice. Evidence dossiers for researchers/clinicians, with uncertainty labels.</div>
+  </header>
+  <main>
+    <section class="agents">
+      <!-- Panel per agent (the "monitor per agent" idea, as tiles). Populated from /run. -->
+      <div class="agent"><span class="dot"></span>1 Intake<br><small>idle</small></div>
+      <div class="agent"><span class="dot"></span>2 Filtering<br><small>idle</small></div>
+      <div class="agent"><span class="dot"></span>3 Phenotype<br><small>idle</small></div>
+      <div class="agent"><span class="dot"></span>4 Literature<br><small>idle</small></div>
+      <div class="agent"><span class="dot"></span>5 Database<br><small>idle</small></div>
+      <div class="agent"><span class="dot"></span>6 Case-Matching<br><small>idle</small></div>
+      <div class="agent"><span class="dot"></span>7 Red Team<br><small>idle</small></div>
+      <div class="agent"><span class="dot"></span>8 Dossier Writer<br><small>idle</small></div>
+    </section>
+    <section class="panel">
+      <h2>Evidence ledger</h2>
+      <div id="ledger"><small>Run a case to populate the evidence ledger.</small></div>
+    </section>
+    <section class="panel">
+      <h2>Evidence dossier</h2>
+      <div id="dossier"><small>The assembled, uncertainty-labeled dossier appears here.</small></div>
+    </section>
+  </main>
+  <!-- TODO: fetch('/run', {POST case}) and render agent status + ledger + dossier -->
+</body>
+</html>
