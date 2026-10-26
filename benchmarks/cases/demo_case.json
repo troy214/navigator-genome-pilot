@@ -1,9 +1,0 @@
-{
-  "case_id": "DEMO-001",
-  "clinical_summary": "Placeholder demo case for scaffold wiring only. Replace with a real published, already-solved public case (answer hidden) before benchmarking.",
-  "hpo_terms": [],
-  "variants": [
-    {"gene": "EXAMPLE1", "hgvs": "NM_000000.0:c.000A>G", "chrom": "1", "pos": 1000000, "ref": "A", "alt": "G"}
-  ],
-  "vcf_path": null
-}

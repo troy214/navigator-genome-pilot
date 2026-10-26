@@ -1,0 +1,21 @@
+{
+  "_note": "HIDDEN ground-truth answer key for benchmark scoring ONLY. Agents never receive this file. Each answer is a well-known, publicly documented causal gene/variant for an already-solved disease.",
+  "CF-CFTR-F508del": {
+    "disease": "Cystic fibrosis",
+    "gene": "CFTR",
+    "variant": "p.Phe508del (c.1521_1523delCTT)",
+    "accepted_genes": ["CFTR"]
+  },
+  "SCD-HBB-E6V": {
+    "disease": "Sickle cell disease",
+    "gene": "HBB",
+    "variant": "p.Glu6Val (c.20A>T)",
+    "accepted_genes": ["HBB"]
+  },
+  "PKU-PAH": {
+    "disease": "Phenylketonuria",
+    "gene": "PAH",
+    "variant": "c.1222C>T (p.Arg408Trp)",
+    "accepted_genes": ["PAH"]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "_note": "Reference library of well-known, textbook-documented solved disease associations (public knowledge). Used by the Case-Matching agent to surface HYPOTHESES by phenotype/gene similarity. This is reference knowledge, NOT the benchmark answer key.",
+  "cases": [
+    {
+      "id": "REF-CF",
+      "disease": "Cystic fibrosis",
+      "gene": "CFTR",
+      "variant": "p.Phe508del (F508del)",
+      "inheritance": "autosomal recessive",
+      "phenotypes": ["Recurrent respiratory infections", "Exocrine pancreatic insufficiency", "Failure to thrive", "Increased sweat chloride", "Chronic cough", "Bronchiectasis"]
+    },
+    {
+      "id": "REF-SCD",
+      "disease": "Sickle cell disease",
+      "gene": "HBB",
+      "variant": "p.Glu6Val (HbS)",
+      "inheritance": "autosomal recessive",
+      "phenotypes": ["Hemolytic anemia", "Pain crisis", "Jaundice", "Splenomegaly", "Recurrent infections", "Anemia"]
+    },
+    {
+      "id": "REF-TAYSACHS",
+      "disease": "Tay-Sachs disease",
+      "gene": "HEXA",
+      "variant": "biallelic loss-of-function",
+      "inheritance": "autosomal recessive",
+      "phenotypes": ["Developmental regression", "Cherry red spot of the macula", "Hypotonia", "Seizure", "Exaggerated startle response"]
+    },
+    {
+      "id": "REF-PKU",
+      "disease": "Phenylketonuria",
+      "gene": "PAH",
+      "variant": "biallelic pathogenic",
+      "inheritance": "autosomal recessive",
+      "phenotypes": ["Intellectual disability", "Seizure", "Eczema", "Hypopigmentation", "Microcephaly"]
+    },
+    {
+      "id": "REF-DMD",
+      "disease": "Duchenne muscular dystrophy",
+      "gene": "DMD",
+      "variant": "out-of-frame deletion",
+      "inheritance": "X-linked recessive",
+      "phenotypes": ["Proximal muscle weakness", "Gowers sign", "Calf pseudohypertrophy", "Elevated creatine kinase", "Delayed motor development"]
+    },
+    {
+      "id": "REF-HD",
+      "disease": "Huntington disease",
+      "gene": "HTT",
+      "variant": "CAG repeat expansion",
+      "inheritance": "autosomal dominant",
+      "phenotypes": ["Chorea", "Cognitive decline", "Depression", "Personality change"]
+    },
+    {
+      "id": "REF-MARFAN",
+      "disease": "Marfan syndrome",
+      "gene": "FBN1",
+      "variant": "pathogenic missense/truncating",
+      "inheritance": "autosomal dominant",
+      "phenotypes": ["Aortic root dilatation", "Ectopia lentis", "Arachnodactyly", "Tall stature", "Pectus deformity"]
+    },
+    {
+      "id": "REF-RETT",
+      "disease": "Rett syndrome",
+      "gene": "MECP2",
+      "variant": "de novo loss-of-function",
+      "inheritance": "X-linked dominant",
+      "phenotypes": ["Developmental regression", "Stereotypic hand movements", "Loss of purposeful hand use", "Seizure", "Microcephaly"]
+    }
+  ]
+}

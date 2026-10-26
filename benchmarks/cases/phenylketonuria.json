@@ -1,0 +1,9 @@
+{
+  "case_id": "PKU-PAH",
+  "clinical_summary": "Infant identified on newborn screening with elevated blood phenylalanine. Untreated siblings reportedly had intellectual disability, seizures, eczema, and unusually fair skin and hair. Musty body odor noted.",
+  "hpo_terms": ["intellectual disability", "seizures", "eczema", "hypopigmentation"],
+  "variants": [
+    {"gene": "PAH", "hgvs": "NM_000277.3:c.1222C>T", "chrom": "12", "pos": 102852888, "ref": "G", "alt": "A", "allele_freq": 0.0002}
+  ],
+  "vcf_path": null
+}

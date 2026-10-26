@@ -1,0 +1,9 @@
+##fileformat=VCFv4.2
+##source=NavigatorGenomePilot-demo-filtered-snippet
+##reference=GRCh38
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: Allele|Effect|Impact|Gene|...">
+##INFO=<ID=GENEINFO,Number=1,Type=String,Description="Gene symbol:GeneID">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+7	117559590	rs113993960	CTT	C	800	PASS	AF=0.0001;GENEINFO=CFTR:1080;ANN=C|inframe_deletion|MODERATE|CFTR|NM_000492.4:c.1521_1523delCTT
+11	1241800	rs35705950	G	A	780	PASS	AF=0.12;GENEINFO=MUC5B:727897;ANN=A|missense_variant|LOW|MUC5B|NM_002458.3:c.100G>A

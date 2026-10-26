@@ -1,0 +1,9 @@
+{
+  "case_id": "SCD-HBB-E6V",
+  "clinical_summary": "Young child of West African ancestry with chronic hemolytic anemia, recurrent episodes of severe bone pain (vaso-occlusive pain crises), scleral icterus/jaundice, and splenomegaly. Peripheral smear shows sickled erythrocytes. Recurrent infections noted.",
+  "hpo_terms": ["hemolytic anemia", "pain crisis", "jaundice", "splenomegaly", "anemia"],
+  "variants": [
+    {"gene": "HBB", "hgvs": "NM_000518.5:c.20A>T", "chrom": "11", "pos": 5227002, "ref": "T", "alt": "A", "allele_freq": 0.008}
+  ],
+  "vcf_path": null
+}

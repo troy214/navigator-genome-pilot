@@ -1,0 +1,10 @@
+{
+  "case_id": "CF-CFTR-F508del",
+  "clinical_summary": "Toddler with recurrent respiratory infections, chronic productive cough, failure to thrive despite good appetite, and steatorrhea consistent with pancreatic insufficiency. Parents note the child tastes salty when kissed. No family history reported.",
+  "hpo_terms": ["recurrent respiratory infections", "chronic cough", "failure to thrive", "pancreatic insufficiency", "salty sweat"],
+  "variants": [
+    {"gene": "CFTR", "hgvs": "NM_000492.4:c.1521_1523delCTT", "chrom": "7", "pos": 117559590, "ref": "CTT", "alt": "C", "allele_freq": 0.0001},
+    {"gene": "MUC5B", "hgvs": "NM_002458.3:c.100G>A", "chrom": "11", "pos": 1241800, "ref": "G", "alt": "A", "allele_freq": 0.12}
+  ],
+  "vcf_path": "benchmarks/cases/cystic_fibrosis.vcf"
+}

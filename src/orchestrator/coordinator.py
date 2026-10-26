@@ -1,10 +1,16 @@
 """Navigator coordinator. Passes clean structured JSON between isolated agents.
 
-Status: SCAFFOLD (Designed). The pipeline order is wired; agent internals are stubs.
-The coordinator never merges agents into one shared chat — each gets only what it needs.
+Each agent gets only the context it needs — never the whole shared chat. The Red Team
+runs in an isolated context that receives the raw evidence WITHOUT any leading hypothesis.
+Per-run output (agent results + dossier path + timings) is persisted to data/runs/.
 """
 from __future__ import annotations
+import json
+import time
+from datetime import datetime, timezone
+from pathlib import Path
 
+from config import settings
 from src.agents.intake import IntakeAgent
 from src.agents.filtering import FilteringAgent
 from src.agents.phenotype import PhenotypeAgent
@@ -14,6 +20,7 @@ from src.agents.case_matching import CaseMatchingAgent
 from src.agents.red_team import RedTeamAgent
 from src.agents.dossier_writer import DossierWriterAgent
 from src.utils.schema import CaseInput, AgentResult
+from src.utils.redaction import redact
 
 
 class Coordinator:
@@ -27,36 +34,73 @@ class Coordinator:
         self.red_team = RedTeamAgent()
         self.dossier_writer = DossierWriterAgent()
 
-    def run(self, case: CaseInput) -> dict:
-        """Run the 8-agent pilot and return the assembled dossier payload."""
+    def run(self, case: CaseInput, persist: bool = True, progress=None) -> dict:
+        t_start = time.time()
         results: list[AgentResult] = []
         ctx: dict = {}
 
+        def step(agent, key, local_ctx=None):
+            if progress:
+                progress(agent.name, "working")
+            r = agent.run(case, local_ctx if local_ctx is not None else ctx)
+            results.append(r)
+            ctx[key] = r.payload
+            if progress:
+                progress(agent.name, r.status)
+            return r
+
         # 1-2: intake -> filtering
-        r = self.intake.run(case, ctx); results.append(r); ctx["intake"] = r.payload
-        r = self.filtering.run(case, ctx); results.append(r); ctx["filtering"] = r.payload
+        step(self.intake, "intake")
+        step(self.filtering, "filtering")
+        # 3: phenotype (clinical summary)
+        step(self.phenotype, "phenotype")
+        # 4-6: world-knowledge + matching
+        step(self.literature, "literature")
+        step(self.database, "database")
+        step(self.case_matching, "case_matching")
 
-        # 3: phenotype (needs only the clinical summary)
-        r = self.phenotype.run(case, ctx); results.append(r); ctx["phenotype"] = r.payload
+        # 7: red team — ISOLATED context, raw evidence only, no leading hypothesis
+        all_evidence = [e.model_dump(mode="json") for res in results for e in res.evidence]
+        rt = self.red_team.run(case, {"evidence": all_evidence})
+        results.append(rt)
+        ctx["red_team"] = rt.payload
+        if progress:
+            progress(self.red_team.name, rt.status)
 
-        # 4-6: world-knowledge + matching (each gets filtered variants + phenotype only)
-        for agent, key in (
-            (self.literature, "literature"),
-            (self.database, "database"),
-            (self.case_matching, "case_matching"),
-        ):
-            r = agent.run(case, ctx); results.append(r); ctx[key] = r.payload
+        # collect all evidence (incl. red team) + unavailable sources for the dossier
+        all_evidence = [e.model_dump(mode="json") for res in results for e in res.evidence]
+        sources_unavailable = sorted({s for res in results for s in res.sources_unavailable})
+        ctx["all_evidence"] = all_evidence
+        ctx["sources_unavailable"] = sources_unavailable
 
-        # 7: red team gets the assembled evidence, in an isolated context
-        all_evidence = [e for res in results for e in res.evidence]
-        r = self.red_team.run(case, {"evidence": [e.model_dump() for e in all_evidence]})
-        results.append(r); ctx["red_team"] = r.payload
+        # 8: dossier writer
+        step(self.dossier_writer, "dossier_writer")
+        dossier_result = results[-1]
 
-        # 8: dossier writer assembles the final artifact
-        r = self.dossier_writer.run(case, ctx); results.append(r)
-
-        return {
+        total = round(time.time() - t_start, 3)
+        out = {
             "case_id": case.case_id,
-            "agent_results": [res.model_dump() for res in results],
-            "status": "scaffold",
+            "provider": settings.active_provider()["name"],
+            "status": "complete",
+            "total_elapsed_s": total,
+            "timings": {r.agent: r.elapsed_s for r in results},
+            "agent_results": [r.model_dump(mode="json") for r in results],
+            "evidence_ledger": all_evidence,
+            "sources_unavailable": sources_unavailable,
+            "dossier": dossier_result.payload.get("dossier", {}),
+            "pdf_path": dossier_result.payload.get("pdf_path"),
+            "s3_destination": dossier_result.payload.get("s3_destination"),
         }
+
+        if persist:
+            self._persist(out)
+        return out
+
+    @staticmethod
+    def _persist(out: dict) -> None:
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        run_dir = settings.RUNS_DIR / f"{out['case_id']}_{ts}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        # Redact before writing the run log.
+        blob = redact(json.dumps(out, indent=2, default=str))
+        (run_dir / "run.json").write_text(blob)
