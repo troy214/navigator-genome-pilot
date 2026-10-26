@@ -4,7 +4,7 @@ Tracked with the same four categories Navigator enforces (Idea / Designed / Impl
 Verified), plus explicit Unknown. "Verified" means it was actually run successfully in this
 environment on the dev provider — NOT that it is validated against the production Meta models.
 
-_Last updated: Oct 26, 2026 (pilot build on dev endpoint)._
+_Last updated: Oct 26, 2026 (pilot build on dev endpoint; public repo published)._
 
 | Component | Category | Evidence |
 |-----------|----------|----------|
@@ -24,6 +24,7 @@ _Last updated: Oct 26, 2026 (pilot build on dev endpoint)._
 | Benchmark scoring | **Verified** | top-1=100%, top-5=100% over 3 solved cases (`benchmarks/results/`) |
 | Demo web app | **Verified** | agent board + evidence ledger + dossier view; run + PDF download work |
 | Public hosting | **Verified** | live at https://navigator-genome.abacusai.cloud (nginx + systemd), crawl-verified |
+| Public GitHub repo (hackathon req) | **Verified** | published public at https://github.com/troy214/navigator-genome-pilot (main, 9 commits, 67 files, no secrets) |
 | Offline test suite | **Verified** | 11 tests pass with LLM + HTTP mocked (`pytest`) |
 | Meta Model API (production) | **Designed** | one-env-var swap; NOT yet run against a live Meta key |
 | AWS deployment (prod backbone) | **Designed** | documented in `infra/aws/`; dev demo runs on this VM, not AWS yet |
