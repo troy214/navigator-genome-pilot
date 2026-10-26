@@ -1,0 +1,18 @@
+# DEV provider model mapping (this VM's OpenAI-compatible endpoint).
+# Used ONLY to prove pipeline logic while no Meta key is present.
+# When META_MODEL_API_KEY is set, config/agents.yaml (Meta model names) is used instead.
+#
+# All agents map to a single fast, capable dev model by default. You may split heavier
+# reasoning agents onto a larger model here without touching any code.
+
+default: gpt-5.4-mini
+
+agents:
+  intake: gpt-5.4-mini
+  filtering: gpt-5.4-mini
+  phenotype: gpt-5.4-mini
+  literature: gpt-5.4-mini
+  database: gpt-5.4-mini
+  case_matching: gpt-5.4-mini
+  red_team: gpt-5.4-mini
+  dossier_writer: gpt-5.4-mini
