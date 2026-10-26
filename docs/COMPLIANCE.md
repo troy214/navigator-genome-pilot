@@ -27,3 +27,24 @@ clearly on the research-tool side:
 - Public repository.
 - New work only (Oct 27 – Nov 4); clearly identify anything pre-existing.
 - 3-minute demo video; submit on the CV platform by Nov 4, 9:00 PM ET.
+
+## Dev-endpoint provability (honesty note)
+
+The pilot currently runs on a **dev stand-in LLM endpoint** to prove the full pipeline logic
+end-to-end before a Meta key is available. This is disclosed openly:
+
+- In production the agents run on **Meta's models** (Muse Spark / Muse Spark open-weight). The
+  swap is one environment variable — see `docs/TRANSPOSE_TO_META.md`.
+- `docs/STATUS.md` marks the Meta-inference and AWS-deployment rows as **Designed**, not
+  Verified, precisely because they have not yet been run in the production environment. We do
+  not claim "Verified" for anything we have not actually executed.
+- Everything benchmarked (top-1 / top-5) was measured on the dev endpoint and labelled as such.
+
+## Verified compliance checklist (as built)
+
+- [x] Research-use-only notice in README, app header, dossier PDF footer, and demo script.
+- [x] Benchmarked only on already-solved, published public cases; answers hidden from agents.
+- [x] Every evidence row carries a source + uncertainty label; nothing presented as a diagnosis.
+- [x] System explicitly says when a source is unavailable / a record is absent (not benign).
+- [x] AWS documented as the backbone; Meta models documented as production inference.
+- [x] Live product: https://navigator-genome.abacusai.cloud

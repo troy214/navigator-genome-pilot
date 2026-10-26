@@ -2,6 +2,7 @@
 requests>=2.31
 pydantic>=2.6
 python-dotenv>=1.0
+PyYAML>=6.0
 
 # Meta Model API is OpenAI-compatible; the openai client works against its base_url
 openai>=1.30

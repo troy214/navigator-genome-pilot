@@ -1,7 +1,11 @@
-# Agent -> Meta model mapping.
+# Agent -> Meta model mapping (PRODUCTION / provider "meta").
+# This file is used ONLY when META_MODEL_API_KEY is set. Until then the pilot runs on the
+# DEV provider using config/models.dev.yaml (gpt-5.4-mini). See docs/TRANSPOSE_TO_META.md.
+#
 # NOTE: these are the recommended STARTING allocations to refine during the build,
 # not verified benchmarks. Lighter agents run on open-weight models (cost control +
-# eligibility for the "Best Build on Meta Open Weight Models" bonus).
+# eligibility for the "Best Build on Meta Open Weight Models" bonus). Confirm the exact
+# model identifiers against the live Meta Model API catalog at hackathon time.
 
 agents:
   intake:
