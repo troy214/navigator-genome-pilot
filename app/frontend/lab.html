@@ -118,6 +118,35 @@
 
     .keyfind { margin-top:9px; font-size:11px; color:var(--muted); line-height:1.4; min-height:30px; }
 
+    /* ---------- Director / Principal Investigator (featured leader) ---------- */
+    .director-wrap { display:flex; justify-content:center; margin:2px 0 28px; }
+    .director {
+      position:relative; display:flex; gap:22px; align-items:center;
+      background:linear-gradient(135deg, rgba(28,52,94,.94), rgba(16,32,60,.94));
+      border:1px solid var(--ring); border-radius:20px; padding:20px 26px;
+      max-width:820px; width:100%; cursor:pointer; outline:none; text-align:left;
+      box-shadow:0 0 0 1px rgba(143,214,255,.28), 0 22px 54px rgba(0,0,0,.5);
+      transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+      backdrop-filter:blur(6px);
+    }
+    .director:hover, .director:focus-visible, .director.speaking {
+      transform:translateY(-4px);
+      border-color:var(--ring);
+      box-shadow:0 0 0 2px rgba(143,214,255,.5), 0 28px 64px rgba(0,0,0,.6);
+    }
+    .director:focus-visible { outline:2px solid var(--ring); outline-offset:3px; }
+    .director .portrait { width:136px; height:136px; flex:0 0 auto; border-width:3px; }
+    .director:hover .portrait img, .director:focus-visible .portrait img, .director.speaking .portrait img { transform:scale(1.07); }
+    .director.speaking .portrait::after { opacity:1; animation:ring 1.3s ease-out infinite; }
+    .director.speaking .spk { display:inline-flex; }
+    .director .spk { top:12px; right:14px; }
+    .director-info { flex:1 1 auto; min-width:0; }
+    .crown { font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase; color:var(--sky); font-weight:700; }
+    .director-info .dname { font-size:23px; font-weight:800; margin:4px 0 2px; letter-spacing:.3px; }
+    .director-info .drole { font-size:12.5px; color:var(--muted); }
+    .director-info .dfind { font-size:12px; color:var(--muted); margin-top:10px; line-height:1.55; max-width:560px; }
+    @media (max-width:560px){ .director { flex-direction:column; text-align:center; } .director-info { text-align:center; } }
+
     /* ---------- Speech bubble ---------- */
     .bubble {
       position:fixed; max-width:400px; z-index:60; background:rgba(16,30,56,.97); color:var(--text);
@@ -160,9 +189,10 @@
   </div>
 
   <main>
+    <div id="directorWrap" class="director-wrap"></div>
     <div class="labtitle">
       <h2>The 8-agent genomics research team</h2>
-      <p>Meet each researcher at their bench — select one to hear their own voice report their contribution to this case.</p>
+      <p>Led by the Director above — meet each researcher at their bench and select one to hear their own voice report their contribution to this case.</p>
     </div>
     <div class="lab" id="lab" role="list" aria-label="Eight research scientists at their lab benches"></div>
   </main>
@@ -219,7 +249,7 @@
     // ---- bubble ----
     const bubble = document.getElementById('bubble');
     function showBubble(a, station, mode){
-      document.getElementById('bWho').textContent = titleCase(a.agent) + ' · ' + (a.status||'').toUpperCase();
+      document.getElementById('bWho').textContent = (a.displayName || titleCase(a.agent)) + ' · ' + (a.status||'').toUpperCase();
       document.getElementById('bJob').textContent = a.job || '';
       document.getElementById('bText').textContent = a.finding || 'No finding recorded — unknown.';
       document.getElementById('bMode').textContent = mode || '';
@@ -240,7 +270,7 @@
     function hideBubble(){ bubble.classList.remove('show'); }
 
     function setSpeaking(station){
-      document.querySelectorAll('.station.speaking').forEach(s=>s.classList.remove('speaking'));
+      document.querySelectorAll('.station.speaking, .director.speaking').forEach(s=>s.classList.remove('speaking'));
       if (station) station.classList.add('speaking');
     }
 
@@ -289,7 +319,46 @@
 
     // ---- render ----
     function statusClass(s){ return (s==='done'||s==='working') ? s : 'unknown'; }
+
+    // ---- Director / Principal Investigator (featured leader) ----
+    function renderDirector(data){
+      const tc = data.top_candidate;
+      const candText = tc ? `${tc.gene} ${tc.variant}` : 'none identified yet';
+      const director = {
+        agent:'director',
+        displayName:'Troy Burns',
+        job:'I coordinate all eight agents — from intake through independent red-team review — and synthesize the final verdict.',
+        status: data.status || 'done',
+        finding:`Leading candidate (hypothesis): ${candText} — moderate confidence. Requires expert review and orthogonal confirmation. Navigator assembles the evidence; it does not diagnose.`,
+        spoken:"I'm Troy Burns, a real human research scientist. Our team built this Navigator Genome Pilot for the Meta Hackathon. I'm the Director of the Navigator research pilot. I coordinate all eight agents and I keep what is verified separate from what is only a hypothesis. On this case the leading candidate is "+candText+", a research hypothesis only — it requires expert review. Navigator assembles the evidence. It does not diagnose.",
+        evidence_count:(data.agents||[]).length
+      };
+      // preload the Director's recorded voice once (same system as the agents)
+      if (!state.audios['director']){ const au=new Audio('/assets/voice_director.mp3'); au.preload='auto'; state.audios['director']=au; }
+      const wrap = document.getElementById('directorWrap');
+      wrap.innerHTML = `
+        <div class="director" id="dirCard" tabindex="0" role="button"
+             aria-label="Troy Burns, Director and Principal Investigator. ${director.finding} Select to hear the final verdict.">
+          <div class="spk" aria-hidden="true">speaking<span class="wave"><i></i><i></i><i></i></span></div>
+          <div class="portrait"><img src="/assets/avatar_director.png" alt="Troy Burns, Director portrait"
+               onerror="this.style.display='none';this.parentNode.style.background='#13233f';"></div>
+          <div class="director-info">
+            <div class="crown">★ Director · Principal Investigator · leads the team</div>
+            <div class="dname">Troy Burns</div>
+            <div class="drole">Coordinates all 8 agents and delivers the synthesized final verdict</div>
+            <div class="dfind">${director.finding}</div>
+          </div>
+        </div>`;
+      const card = document.getElementById('dirCard');
+      const go = () => activate(director, card);
+      card.addEventListener('mouseenter', go);
+      card.addEventListener('click', go);
+      card.addEventListener('focus', go);
+      card.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); }});
+    }
+
     function renderLab(data){
+      renderDirector(data);
       document.getElementById('provider').textContent = 'provider: ' + (data.provider || '—');
       document.getElementById('casePill').textContent = 'case: ' + (data.case_id || '—');
       document.getElementById('caseName').textContent = data.case_id || '—';
@@ -337,7 +406,7 @@
         document.getElementById('loadErr').textContent = 'Could not load run data: '+e.message+' — run the CF case first.';
       }
     }
-    document.addEventListener('click', e=>{ if(!e.target.closest('.station') && !e.target.closest('.bubble')) hideBubble(); });
+    document.addEventListener('click', e=>{ if(!e.target.closest('.station') && !e.target.closest('.director') && !e.target.closest('.bubble')) hideBubble(); });
     window.addEventListener('beforeunload', stopAllAudio);
     load();
   </script>
