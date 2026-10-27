@@ -1,43 +1,52 @@
 # Agent -> Meta model mapping (PRODUCTION / provider "meta").
-# This file is used ONLY when META_MODEL_API_KEY is set. Until then the pilot runs on the
-# DEV provider using config/models.dev.yaml (gpt-5.4-mini). See docs/TRANSPOSE_TO_META.md.
+# Used ONLY when PROVIDER=meta. Until billing is live the pilot runs on the DEV provider
+# (config/models.dev.yaml). See docs/TRANSPOSE_TO_META.md.
 #
-# NOTE: these are the recommended STARTING allocations to refine during the build,
-# not verified benchmarks. Lighter agents run on open-weight models (cost control +
-# eligibility for the "Best Build on Meta Open Weight Models" bonus). Confirm the exact
-# model identifiers against the live Meta Model API catalog at hackathon time.
+# VERIFIED 2026-10-27 against the live Meta Model API catalog (GET https://api.meta.ai/v1/models)
+# using Troy's own API key. The key authenticates; the ONLY remaining blocker is account billing
+# (a valid payment method must be on file — see STATUS.md). Real catalog returned:
+#   muse-spark-1.3, muse-spark-1.3-contributor, muse-spark-1.2, muse-spark-1.2-contributor,
+#   muse-spark-1.1, muse-wonder-1.0, muse-image-1.0, muse-voice-transcribe-1.0, sam-3.1
+# The earlier placeholder names (muse-spark, muse-spark-open-1026) do NOT exist and are replaced.
+#
+# All eight reasoning agents use the latest verified text model, muse-spark-1.3.
+# HYPOTHESIS (not yet verified): the "-contributor" variants may be the open-weight / community
+# models that qualify for the "Best Build on Meta Open Weight Models" bonus. This cannot be
+# confirmed until billing is active and we can actually run them. Once confirmed, move the three
+# high-volume agents (intake, filtering, database) to muse-spark-1.3-contributor — YAML only,
+# no code change.
 
 agents:
   intake:
-    model: meta-models/muse-spark-open-1026
+    model: muse-spark-1.3
     role: "Parse VCF / demo case, normalize variants"
     isolated: true
   filtering:
-    model: meta-models/muse-spark-open-1026
+    model: muse-spark-1.3
     role: "Reduce candidate variants by frequency / quality"
     isolated: true
   phenotype:
-    model: muse-spark
+    model: muse-spark-1.3
     role: "Map clinical picture to HPO phenotype terms"
     isolated: true
   literature:
-    model: muse-spark
+    model: muse-spark-1.3
     role: "Search and summarize relevant publications"
     isolated: true
   database:
-    model: meta-models/muse-spark-open-1026
+    model: muse-spark-1.3
     role: "Query OMIM / Orphanet / ClinVar / gnomAD"
     isolated: true
   case_matching:
-    model: muse-spark
+    model: muse-spark-1.3
     role: "Compare case against known solved cases"
     isolated: true
   red_team:
-    model: muse-spark
+    model: muse-spark-1.3
     role: "Challenge conclusions, flag uncertainty (independent, isolated context)"
     isolated: true
   dossier_writer:
-    model: muse-spark
+    model: muse-spark-1.3
     role: "Assemble the physician-facing evidence dossier"
     isolated: true
 

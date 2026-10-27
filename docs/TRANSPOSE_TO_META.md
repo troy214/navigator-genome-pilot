@@ -5,6 +5,23 @@ Model API (and partner inference) is an **environment change, not a code change*
 client (`src/models/meta_client.py`) and resolver (`src/models/config.py`) already switch on
 the presence of `META_MODEL_API_KEY`.
 
+
+## STATUS (verified 2026-10-27)
+
+Troy's Meta Model API key is obtained and **authenticates** against `https://api.meta.ai/v1`
+(the default base URL below is correct — no override needed). `GET /models` returns the live
+catalog; the real text model is **`muse-spark-1.3`** (the earlier placeholders `muse-spark` /
+`muse-spark-open-1026` do not exist and have been corrected in `config/agents.yaml`).
+
+The ONLY remaining blocker is **account billing**: chat completions currently return
+`HTTP 402 billing_not_configured` ("a valid payment method must be on file"). Resolve at
+`https://dev.meta.ai/billing/?team_id=1686951162950737`.
+
+Two helper scripts automate the rest:
+- `scripts/check_meta_billing.sh` — prints `READY` once a real call succeeds (billing fixed).
+- `scripts/activate_meta.sh` — verifies billing, flips the live service to `PROVIDER=meta`,
+  restarts it, and health-checks it. Then run `python3 -m benchmarks.score`.
+
 ## 1. The one required change
 
 ```bash
@@ -17,7 +34,7 @@ the Meta Model API, and every agent's model name comes from `config/agents.yaml`
 ## 2. Optional environment overrides
 
 ```bash
-export META_MODEL_API_BASE_URL=https://api.meta.ai/v1   # default; override if told otherwise
+export META_MODEL_API_BASE_URL=https://api.meta.ai/v1   # VERIFIED correct 2026-10-27; no override needed
 export META_MODEL_TEAM_ID=<your-team-id>                 # if the Meta API requires it
 export META_DEFAULT_MODEL=muse-spark                     # fallback when an agent has no mapping
 ```
@@ -26,10 +43,11 @@ export META_DEFAULT_MODEL=muse-spark                     # fallback when an agen
 
 `config/agents.yaml` maps each agent to a Meta model:
 
-| Agent | Model |
+| Agent | Model (verified id) |
 |-------|-------|
-| intake, filtering, database | `meta-models/muse-spark-open-1026` (open-weight — eligible for the open-weight bonus) |
-| phenotype, literature, case_matching, red_team, dossier_writer | `muse-spark` |
+| all eight agents | `muse-spark-1.3` (latest text model confirmed in the live catalog) |
+
+_Open-weight bonus (hypothesis, unverified): the `-contributor` variants may be the open-weight models; move the three high-volume agents to `muse-spark-1.3-contributor` once billing lets us test it — YAML only._
 
 **Action:** confirm these exact model identifiers against the Meta Model API model list at
 hackathon time and edit `config/agents.yaml` if the names differ. No code changes — only YAML.
