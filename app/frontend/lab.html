@@ -217,9 +217,13 @@
 
     const state = { muted:false, current:null, agents:[], audios:{}, activeAudio:null };
 
+    // Cache-buster for voice clips — bump when a voice file is regenerated so
+    // browsers/CDN never replay a stale clip under the same filename.
+    const AV = '?v=20261027c';
+
     // ---- Preload one HTMLAudioElement per agent ----
     AGENTS.forEach(a=>{
-      const au = new Audio(`/assets/voice_${a}.mp3`);
+      const au = new Audio(`/assets/voice_${a}.mp3${AV}`);
       au.preload = "auto";
       state.audios[a] = au;
     });
@@ -334,7 +338,7 @@
         evidence_count:(data.agents||[]).length
       };
       // preload the Director's recorded voice once (same system as the agents)
-      if (!state.audios['director']){ const au=new Audio('/assets/voice_director.mp3'); au.preload='auto'; state.audios['director']=au; }
+      if (!state.audios['director']){ const au=new Audio('/assets/voice_director.mp3'+AV); au.preload='auto'; state.audios['director']=au; }
       const wrap = document.getElementById('directorWrap');
       wrap.innerHTML = `
         <div class="director" id="dirCard" tabindex="0" role="button"
