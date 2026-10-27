@@ -8,7 +8,7 @@ for k,v in d.items():
     if 'eleven' in k.lower():
         s=v.get('secrets',v) if isinstance(v,dict) else v
         [print(vv.get('value') if isinstance(vv,dict) else vv) or exit() for kk,vv in s.items()]")
-VOICE="${1:-pNInz6obpgDQGcFmaJgB}"   # default: Adam (professional AI narrator, stock). Troy opted for an AI voice over his own clone.
+VOICE="${1:-onwK4e9ZLuTAKqWW03F9}"   # default: Daniel (authoritative AI narrator, stock), distinct from Adam/Troy clone
 SCRIPT="Our team built this Navigator Genome Pilot for the Meta Hackathon. I'm the Director of the Navigator research pilot. I coordinate all eight agents, from intake through independent red-team review, and I hold them to one standard: keep what is verified separate from what is only a hypothesis. On this case, the team's leading candidate is a rare C F T R variant in the F five-oh-eight del region, consistent with cystic fibrosis. I'm flagging it as a research hypothesis only, moderate confidence, requiring expert review and orthogonal confirmation. Navigator assembles the evidence. It does not diagnose."
 python3 - "$KEY" "$VOICE" "$SCRIPT" <<'PY'
 import sys,json,urllib.request
