@@ -13,6 +13,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 from config import settings
 from src.orchestrator.coordinator import Coordinator
@@ -22,6 +23,11 @@ app = FastAPI(title="Navigator Genome Pilot", version="1.0.0")
 
 FRONTEND = settings.ROOT / "app" / "frontend" / "index.html"
 LAB_PAGE = settings.ROOT / "app" / "frontend" / "lab.html"
+ASSETS_DIR = settings.ROOT / "app" / "frontend" / "assets"
+
+# Serve avatar PNGs, lab_background.png and voice_*.mp3 clips used by the Agent Lab page.
+if ASSETS_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=str(ASSETS_DIR)), name="assets")
 CASES_DIR = settings.ROOT / "benchmarks" / "cases"
 RUNS_DIR = settings.DATA_DIR / "runs"
 
