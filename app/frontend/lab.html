@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Navigator Genome Pilot — Agent Lab</title>
+  <style>
+    :root {
+      --bg:#080a12; --bg2:#0d1120; --panel:#121932; --panel2:#182043; --line:#243063;
+      --muted:#9aa7c7; --text:#e8ecff; --accent:#5aa0ff; --cyan:#35e0d8; --green:#3fd77a;
+      --amber:#f0b429; --red:#ff6b6b; --glow:#6fd6ff;
+    }
+    * { box-sizing:border-box; }
+    html,body { margin:0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--text);
+      background:
+        radial-gradient(1100px 500px at 50% -10%, #1a2550 0%, transparent 60%),
+        radial-gradient(800px 400px at 90% 10%, #152046 0%, transparent 55%),
+        var(--bg);
+      min-height:100vh;
+    }
+    a { color:var(--accent); }
+    header {
+      padding:14px 22px; border-bottom:1px solid var(--line);
+      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+      background:rgba(8,10,18,.75); position:sticky; top:0; z-index:40; backdrop-filter:blur(8px);
+    }
+    header h1 { font-size:17px; margin:0; letter-spacing:.3px; }
+    .pill { font-size:11px; padding:3px 9px; border-radius:20px; background:var(--panel2);
+            border:1px solid var(--line); color:var(--muted); }
+    .pill.live { color:var(--green); border-color:#1d5c38; }
+    .spacer { flex:1 1 auto; }
+    .navlink { font-size:13px; text-decoration:none; color:var(--text); background:var(--panel2);
+               border:1px solid var(--line); padding:7px 12px; border-radius:8px; }
+    .navlink:hover { border-color:var(--accent); }
+    button.ctl { font-size:13px; padding:7px 12px; border-radius:8px; border:1px solid var(--line);
+                 background:var(--panel2); color:var(--text); cursor:pointer; }
+    button.ctl:hover { border-color:var(--accent); }
+    button.ctl.on { background:#2a1515; border-color:#5c1d1d; color:var(--red); }
+
+    .banner {
+      margin:0; padding:9px 22px; font-size:12.5px; font-weight:600; letter-spacing:.2px;
+      color:#1a1205; background:linear-gradient(90deg,#f0b429,#ffd369); text-align:center;
+    }
+    .subbar { padding:10px 22px; display:flex; gap:10px 18px; flex-wrap:wrap; align-items:center;
+              border-bottom:1px solid var(--line); font-size:12.5px; color:var(--muted); }
+    .subbar b { color:var(--text); }
+    .hint { font-size:12px; color:var(--muted); }
+
+    main { padding:18px 22px 60px; max-width:1500px; margin:0 auto; }
+    .lab {
+      display:grid; grid-template-columns:repeat(4, 1fr); gap:18px 16px;
+      padding:22px 14px 30px; border-radius:16px;
+      background:
+        linear-gradient(transparent 0 72%, rgba(90,160,255,.05) 72% 100%),
+        repeating-linear-gradient(90deg, transparent 0 78px, rgba(36,48,99,.35) 78px 80px);
+      border:1px solid var(--line);
+    }
+    .bench { display:flex; flex-direction:column; align-items:center; }
+
+    /* ---------- Robot ---------- */
+    .bot {
+      position:relative; width:150px; cursor:pointer; outline:none;
+      padding:8px 8px 0; border-radius:14px; border:1px solid transparent;
+      transition:transform .18s ease, border-color .18s ease, background .18s;
+    }
+    .bot:hover, .bot:focus-visible, .bot.speaking {
+      border-color:var(--glow); background:rgba(53,224,216,.06);
+      box-shadow:0 0 0 1px rgba(111,214,255,.25), 0 10px 30px rgba(0,0,0,.4);
+    }
+    .bot:focus-visible { outline:2px solid var(--glow); outline-offset:3px; }
+    .robot { width:120px; height:132px; margin:0 auto; position:relative; transform-origin:50% 90%; }
+    .bot:hover .robot, .bot:focus-visible .robot, .bot.speaking .robot { animation:bob 1.1s ease-in-out infinite; }
+    @keyframes bob { 0%,100%{ transform:translateY(0) rotate(-1.2deg);} 50%{ transform:translateY(-6px) rotate(1.2deg);} }
+
+    .antenna { position:absolute; left:50%; top:-4px; width:3px; height:18px; background:#6c7bb0;
+               transform:translateX(-50%); transform-origin:bottom; }
+    .antenna .bulb { position:absolute; top:-7px; left:50%; width:10px; height:10px; border-radius:50%;
+                     transform:translateX(-50%); background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
+    .bot:hover .antenna, .bot:focus-visible .antenna, .bot.speaking .antenna { animation:sway 0.7s ease-in-out infinite; }
+    @keyframes sway { 0%,100%{transform:translateX(-50%) rotate(-12deg);} 50%{transform:translateX(-50%) rotate(12deg);} }
+
+    .head { position:absolute; left:50%; top:14px; width:76px; height:60px; transform:translateX(-50%);
+            border-radius:16px; background:linear-gradient(180deg,#2b3666,#1b2448);
+            border:2px solid #3b4a8a; }
+    .eyes { position:absolute; left:50%; top:24px; transform:translateX(-50%); display:flex; gap:14px; }
+    .eye { width:16px; height:16px; border-radius:50%; background:#1a2340;
+           border:2px solid var(--muted); transition:all .2s; }
+    .bot:hover .eye, .bot:focus-visible .eye, .bot.speaking .eye {
+      background:var(--glow); border-color:#fff; box-shadow:0 0 12px var(--glow); }
+    .mouth { position:absolute; left:50%; bottom:8px; transform:translateX(-50%);
+             width:34px; height:7px; border-radius:3px; background:#0c1330; overflow:hidden; }
+    .mouth i { display:block; width:100%; height:100%;
+               background:repeating-linear-gradient(90deg,var(--cyan) 0 3px, transparent 3px 6px); opacity:.35; }
+    .bot.speaking .mouth i { animation:talk .28s steps(2) infinite; opacity:.9; }
+    @keyframes talk { 0%{transform:translateY(0);} 100%{transform:translateY(-3px);} }
+
+    .torso { position:absolute; left:50%; top:74px; width:92px; height:50px; transform:translateX(-50%);
+             border-radius:14px 14px 10px 10px;
+             background:linear-gradient(180deg,#242f5c,#161e3c); border:2px solid #38457f; }
+    .torso .core { position:absolute; left:50%; top:16px; transform:translateX(-50%);
+                   width:20px; height:20px; border-radius:50%; background:var(--accent);
+                   box-shadow:0 0 10px var(--accent); }
+    .bot:hover .torso .core, .bot.speaking .torso .core { animation:pulse 0.9s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+    .arm { position:absolute; top:80px; width:12px; height:40px; border-radius:7px;
+           background:#2b3666; border:2px solid #3b4a8a; transform-origin:top center; }
+    .arm.l { left:6px; } .arm.r { right:6px; }
+    .bot:hover .arm.l, .bot:focus-visible .arm.l, .bot.speaking .arm.l { animation:wave 0.8s ease-in-out infinite; }
+    .bot:hover .arm.r, .bot:focus-visible .arm.r, .bot.speaking .arm.r { animation:wave2 0.8s ease-in-out infinite; }
+    @keyframes wave { 0%,100%{transform:rotate(8deg);} 50%{transform:rotate(-32deg);} }
+    @keyframes wave2 { 0%,100%{transform:rotate(-8deg);} 50%{transform:rotate(32deg);} }
+
+    .label { margin-top:8px; text-align:center; }
+    .label .name { font-size:13px; font-weight:700; letter-spacing:.3px; }
+    .label .role { font-size:10.5px; color:var(--muted); line-height:1.3; margin-top:2px; min-height:26px; }
+
+    .badge { display:inline-flex; align-items:center; gap:5px; margin-top:6px; font-size:10px;
+             padding:2px 8px; border-radius:20px; border:1px solid var(--line); background:var(--panel2); }
+    .badge .d { width:7px; height:7px; border-radius:50%; background:#5b6472; }
+    .badge.done .d { background:var(--green); } .badge.done { color:var(--green); border-color:#1d5c38; }
+    .badge.working .d { background:var(--amber); animation:pulse 1s infinite; } .badge.working { color:var(--amber); }
+    .badge.unknown .d { background:var(--red); } .badge.unknown { color:var(--red); }
+
+    .keyfind { margin-top:7px; font-size:10.5px; color:var(--muted); line-height:1.35;
+               min-height:30px; text-align:center; max-width:150px; }
+
+    /* ---------- Speech bubble ---------- */
+    .bubble {
+      position:fixed; max-width:380px; z-index:60; background:var(--panel); color:var(--text);
+      border:1px solid var(--glow); border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.5;
+      box-shadow:0 14px 40px rgba(0,0,0,.55); display:none;
+    }
+    .bubble.show { display:block; }
+    .bubble .who { font-size:11px; font-weight:700; color:var(--cyan); text-transform:uppercase;
+                   letter-spacing:.5px; margin-bottom:5px; }
+    .bubble .job { color:var(--muted); font-size:12px; margin-bottom:6px; }
+    @media (max-width:1100px){ .lab { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:560px){ .lab { grid-template-columns:1fr; } .bot{ width:100%; } }
+    footer { padding:20px 22px 40px; color:var(--muted); font-size:11.5px; text-align:center; line-height:1.6; }
+    .loaderr { color:var(--amber); font-size:12.5px; padding:0 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🤖 Navigator Agent Lab</h1>
+    <span class="pill" id="provider">provider: …</span>
+    <span class="pill live" id="casePill">case: …</span>
+    <span class="spacer"></span>
+    <span class="hint">Hover · click · or Tab+Enter a robot</span>
+    <button class="ctl" id="muteBtn" aria-pressed="false" title="Mute / unmute the robot voices">🔊 Sound on</button>
+    <a class="navlink" href="/">← Dashboard</a>
+  </header>
+
+  <p class="banner">⚠ Research use only — NOT a diagnostic system and NOT medical advice. Each robot reports a research hypothesis with explicit uncertainty.</p>
+
+  <div class="subbar">
+    <span>Live case: <b id="caseName">…</b></span>
+    <span>Top candidate (hypothesis): <b id="topCand">…</b></span>
+    <span>Pipeline status: <b id="runStatus">…</b></span>
+    <span id="srcUnavail"></span>
+    <span class="loaderr" id="loadErr"></span>
+  </div>
+
+  <main>
+    <div class="lab" id="lab" role="list" aria-label="Eight research agents at their lab benches"></div>
+  </main>
+
+  <div class="bubble" id="bubble" role="status" aria-live="polite">
+    <div class="who" id="bWho"></div>
+    <div class="job" id="bJob"></div>
+    <div id="bText"></div>
+  </div>
+
+  <footer>
+    Navigator Genome Pilot · 8-agent evidence pipeline · Meta Global AI Developer Hackathon.<br/>
+    Every claim carries a knowledge label (Idea / Designed / Implemented / Verified / Unknown).
+    Absent database records are treated as <b>absent, not benign</b>. When a source is unavailable the lab says so.<br/>
+    Research use only — not a diagnostic system; no medical advice. AWS is the documented infrastructure backbone.
+  </footer>
+
+  <script>
+    // ---- robot face markup (no external assets) ----
+    function robotSVG() {
+      return `
+        <div class="robot" aria-hidden="true">
+          <div class="antenna"><span class="bulb"></span></div>
+          <div class="head"><div class="eyes"><span class="eye"></span><span class="eye"></span></div>
+            <div class="mouth"><i></i></div></div>
+          <div class="arm l"></div><div class="arm r"></div>
+          <div class="torso"><div class="core"></div></div>
+        </div>`;
+    }
+    function titleCase(s){ return (s||'').replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase()); }
+
+    const state = { muted:false, voices:[], current:null, agents:[] };
+
+    // ---- voices ----
+    function loadVoices(){ state.voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+    if (window.speechSynthesis){
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    function pickVoice(){
+      if (!state.voices.length) loadVoices();
+      const prefer = [/zarvox/i,/trinoids/i,/cellos/i,/robot/i,/google uk english male/i,/daniel/i,/english.*male/i];
+      for (const rx of prefer){ const v = state.voices.find(v=>rx.test(v.name)); if (v) return v; }
+      return state.voices.find(v=>/^en(-|_|$)/i.test(v.lang)) || state.voices[0] || null;
+    }
+    function speak(text, botEl){
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();              // only one speaks at a time
+      document.querySelectorAll('.bot.speaking').forEach(b=>b.classList.remove('speaking'));
+      if (botEl) botEl.classList.add('speaking');
+      if (state.muted) return;                      // still animate + caption when muted
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickVoice(); if (v) u.voice = v;
+      u.rate = 0.92; u.pitch = 0.5; u.volume = 1;   // robotic: low pitch, measured rate
+      u.onend = () => { if (botEl) botEl.classList.remove('speaking'); };
+      try { window.speechSynthesis.speak(u); } catch(e){}
+    }
+
+    // ---- bubble ----
+    const bubble = document.getElementById('bubble');
+    function showBubble(a, botEl){
+      document.getElementById('bWho').textContent = titleCase(a.agent) + ' unit · ' + (a.status||'').toUpperCase();
+      document.getElementById('bJob').textContent = a.job || '';
+      document.getElementById('bText').textContent = a.finding || '';
+      bubble.classList.add('show');
+      // position near the bot, clamped to viewport
+      const r = botEl.getBoundingClientRect();
+      const bw = Math.min(380, window.innerWidth-24);
+      bubble.style.width = bw+'px';
+      let left = r.left + r.width/2 - bw/2;
+      left = Math.max(12, Math.min(left, window.innerWidth-bw-12));
+      let top = r.bottom + 10;
+      bubble.style.visibility='hidden';
+      requestAnimationFrame(()=>{
+        const bh = bubble.offsetHeight;
+        if (top + bh > window.innerHeight-10) top = Math.max(10, r.top - bh - 10);
+        bubble.style.left = left+'px'; bubble.style.top = top+'px'; bubble.style.visibility='visible';
+      });
+    }
+    function hideBubble(){ bubble.classList.remove('show'); }
+
+    function activate(a, botEl){
+      state.current = a.agent;
+      showBubble(a, botEl);
+      speak((a.spoken || a.job || ''), botEl);
+    }
+
+    // ---- mute ----
+    const muteBtn = document.getElementById('muteBtn');
+    muteBtn.addEventListener('click', ()=>{
+      state.muted = !state.muted;
+      muteBtn.classList.toggle('on', state.muted);
+      muteBtn.setAttribute('aria-pressed', String(state.muted));
+      muteBtn.textContent = state.muted ? '🔇 Muted' : '🔊 Sound on';
+      if (state.muted && window.speechSynthesis) window.speechSynthesis.cancel();
+    });
+
+    // ---- render ----
+    function statusClass(s){ return (s==='done'||s==='working') ? s : 'unknown'; }
+    function renderLab(data){
+      document.getElementById('provider').textContent = 'provider: ' + (data.provider || '—');
+      document.getElementById('casePill').textContent = 'case: ' + (data.case_id || '—');
+      document.getElementById('caseName').textContent = data.case_id || '—';
+      document.getElementById('runStatus').textContent = data.status || '—';
+      const tc = data.top_candidate;
+      document.getElementById('topCand').textContent = tc ? (tc.gene + ' ' + tc.variant) : 'none';
+      const su = data.sources_unavailable || [];
+      document.getElementById('srcUnavail').textContent = su.length
+        ? ('Sources unavailable: ' + su.join(', ')) : 'All sources responded.';
+
+      const lab = document.getElementById('lab');
+      lab.innerHTML = '';
+      state.agents = data.agents || [];
+      state.agents.forEach(a=>{
+        const bench = document.createElement('div'); bench.className='bench'; bench.setAttribute('role','listitem');
+        const bot = document.createElement('div');
+        bot.className='bot'; bot.tabIndex=0;
+        bot.setAttribute('role','button');
+        bot.setAttribute('aria-label', titleCase(a.agent)+' agent. '+(a.job||'')+' Status '+(a.status||'unknown')+'. '+(a.finding||''));
+        const sc = statusClass(a.status);
+        bot.innerHTML = robotSVG() +
+          `<div class="label"><div class="name">${titleCase(a.agent)}</div>
+             <div class="role">${a.job ? a.job.split('.').slice(1).join('.').trim() || a.job : ''}</div></div>
+           <div class="badge ${sc}"><span class="d"></span>${(a.status||'unknown').toUpperCase()} · ${a.evidence_count||0} evidence</div>
+           <div class="keyfind">${a.finding || ''}</div>`;
+        const go = ()=>activate(a, bot);
+        bot.addEventListener('mouseenter', go);
+        bot.addEventListener('click', go);
+        bot.addEventListener('focus', go);
+        bot.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); }});
+        bot.addEventListener('mouseleave', ()=>{ /* keep bubble until another bot; just stop pulse */ });
+        bench.appendChild(bot);
+        lab.appendChild(bench);
+      });
+    }
+
+    async function load(){
+      try {
+        const r = await fetch('/lab-data');
+        if (!r.ok) throw new Error('HTTP '+r.status);
+        const data = await r.json();
+        renderLab(data);
+      } catch(e){
+        document.getElementById('loadErr').textContent = 'Could not load run data: '+e.message+' — run the CF case first.';
+      }
+    }
+    document.addEventListener('click', e=>{ if(!e.target.closest('.bot') && !e.target.closest('.bubble')) hideBubble(); });
+    window.addEventListener('beforeunload', ()=>{ if(window.speechSynthesis) window.speechSynthesis.cancel(); });
+    load();
+  </script>
+</body>
+</html>
