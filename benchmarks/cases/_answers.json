@@ -4,18 +4,120 @@
     "disease": "Cystic fibrosis",
     "gene": "CFTR",
     "variant": "p.Phe508del (c.1521_1523delCTT)",
-    "accepted_genes": ["CFTR"]
+    "accepted_genes": [
+      "CFTR"
+    ]
   },
   "SCD-HBB-E6V": {
     "disease": "Sickle cell disease",
     "gene": "HBB",
     "variant": "p.Glu6Val (c.20A>T)",
-    "accepted_genes": ["HBB"]
+    "accepted_genes": [
+      "HBB"
+    ]
   },
   "PKU-PAH": {
     "disease": "Phenylketonuria",
     "gene": "PAH",
     "variant": "c.1222C>T (p.Arg408Trp)",
-    "accepted_genes": ["PAH"]
+    "accepted_genes": [
+      "PAH"
+    ]
+  },
+  "DMD-DMD-R1577X": {
+    "disease": "Duchenne muscular dystrophy",
+    "gene": "DMD",
+    "variant": "c.4729C>T (p.Arg1577Ter)",
+    "accepted_genes": [
+      "DMD"
+    ]
+  },
+  "HEMA-F8-R2016W": {
+    "disease": "Hemophilia A",
+    "gene": "F8",
+    "variant": "c.6046C>T (p.Arg2016Trp)",
+    "accepted_genes": [
+      "F8"
+    ]
+  },
+  "TSD-HEXA-1278insTATC": {
+    "disease": "Tay-Sachs disease",
+    "gene": "HEXA",
+    "variant": "c.1274_1277dupTATC (p.Tyr427IlefsTer5)",
+    "accepted_genes": [
+      "HEXA"
+    ]
+  },
+  "SMA-SMN1-EX7DEL": {
+    "disease": "Spinal muscular atrophy type 1",
+    "gene": "SMN1",
+    "variant": "homozygous SMN1 exon 7 deletion (c.840C>T / gene conversion)",
+    "accepted_genes": [
+      "SMN1"
+    ]
+  },
+  "MFS-FBN1-C1170Y": {
+    "disease": "Marfan syndrome",
+    "gene": "FBN1",
+    "variant": "c.3509G>A (p.Cys1170Tyr)",
+    "accepted_genes": [
+      "FBN1"
+    ]
+  },
+  "FH-LDLR-G592E": {
+    "disease": "Familial hypercholesterolemia",
+    "gene": "LDLR",
+    "variant": "c.1775G>A (p.Gly592Glu)",
+    "accepted_genes": [
+      "LDLR"
+    ]
+  },
+  "RETT-MECP2-T158M": {
+    "disease": "Rett syndrome",
+    "gene": "MECP2",
+    "variant": "c.473C>T (p.Thr158Met)",
+    "accepted_genes": [
+      "MECP2"
+    ]
+  },
+  "HD-HTT-CAG-EXP": {
+    "disease": "Huntington disease",
+    "gene": "HTT",
+    "variant": "expanded CAG trinucleotide repeat (~42) in HTT exon 1",
+    "accepted_genes": [
+      "HTT"
+    ]
+  },
+  "POMPE-GAA-IVS1": {
+    "disease": "Pompe disease (late-onset)",
+    "gene": "GAA",
+    "variant": "c.-32-13T>G (common late-onset splice variant)",
+    "accepted_genes": [
+      "GAA"
+    ]
+  },
+  "WILSON-ATP7B-H1069Q": {
+    "disease": "Wilson disease",
+    "gene": "ATP7B",
+    "variant": "c.3207C>A (p.His1069Gln)",
+    "accepted_genes": [
+      "ATP7B"
+    ]
+  },
+  "HBOC-BRCA1-185delAG": {
+    "disease": "Hereditary breast and ovarian cancer syndrome",
+    "gene": "BRCA1",
+    "variant": "c.68_69delAG (185delAG; p.Glu23ValfsTer17)",
+    "accepted_genes": [
+      "BRCA1"
+    ]
+  },
+  "VHL-VHL-R167W": {
+    "disease": "Von Hippel-Lindau disease",
+    "gene": "VHL",
+    "variant": "c.499C>T (p.Arg167Trp)",
+    "accepted_genes": [
+      "VHL"
+    ]
   }
 }

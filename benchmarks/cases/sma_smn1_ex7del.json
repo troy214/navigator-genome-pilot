@@ -1,0 +1,32 @@
+{
+  "case_id": "SMA-SMN1-EX7DEL",
+  "clinical_summary": "Floppy infant with severe generalized hypotonia, symmetric proximal weakness, absent deep tendon reflexes, tongue fasciculations, and a bell-shaped chest with paradoxical breathing. The infant is alert with preserved facial expression. Motor milestones are not achieved.",
+  "hpo_terms": [
+    "neonatal hypotonia",
+    "areflexia",
+    "tongue fasciculations",
+    "muscle weakness"
+  ],
+  "variants": [
+    {
+      "gene": "SMN1",
+      "hgvs": "NM_000344.4:c.840C>T (homozygous SMN1 exon 7 loss)",
+      "chrom": "5",
+      "pos": 70951946,
+      "ref": "C",
+      "alt": "T",
+      "allele_freq": 2e-05
+    },
+    {
+      "gene": "HFE",
+      "hgvs": "NM_000410.4:c.187C>G",
+      "chrom": "6",
+      "pos": 26090951,
+      "ref": "C",
+      "alt": "G",
+      "rsid": "rs1799945",
+      "allele_freq": 0.14
+    }
+  ],
+  "vcf_path": null
+}

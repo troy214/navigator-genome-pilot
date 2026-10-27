@@ -1,0 +1,32 @@
+{
+  "case_id": "HD-HTT-CAG-EXP",
+  "clinical_summary": "Adult in their 40s with progressive involuntary choreiform movements, deteriorating coordination, cognitive decline, and personality/behavioral change with irritability. A parent developed similar progressive movement and psychiatric symptoms in mid-life, consistent with autosomal dominant inheritance.",
+  "hpo_terms": [
+    "chorea",
+    "progressive cognitive impairment",
+    "personality changes",
+    "involuntary movements"
+  ],
+  "variants": [
+    {
+      "gene": "HTT",
+      "hgvs": "NM_002111.8:c.52CAG[42] (expanded CAG repeat)",
+      "chrom": "4",
+      "pos": 3074877,
+      "ref": "CAG",
+      "alt": "CAGCAG",
+      "allele_freq": 2e-05
+    },
+    {
+      "gene": "HFE",
+      "hgvs": "NM_000410.4:c.187C>G",
+      "chrom": "6",
+      "pos": 26090951,
+      "ref": "C",
+      "alt": "G",
+      "rsid": "rs1799945",
+      "allele_freq": 0.14
+    }
+  ],
+  "vcf_path": null
+}

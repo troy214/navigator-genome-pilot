@@ -1,0 +1,32 @@
+{
+  "case_id": "FH-LDLR-G592E",
+  "clinical_summary": "Adult with markedly elevated LDL cholesterol resistant to diet, tendon xanthomas over the Achilles and knuckles, and corneal arcus at a young age. There is a strong family history of premature myocardial infarction affecting a parent and sibling before age 50.",
+  "hpo_terms": [
+    "hypercholesterolemia",
+    "tendon xanthomatosis",
+    "premature coronary artery disease",
+    "corneal arcus"
+  ],
+  "variants": [
+    {
+      "gene": "LDLR",
+      "hgvs": "NM_000527.5:c.1775G>A",
+      "chrom": "19",
+      "pos": 11116926,
+      "ref": "G",
+      "alt": "A",
+      "allele_freq": 8e-05
+    },
+    {
+      "gene": "HFE",
+      "hgvs": "NM_000410.4:c.187C>G",
+      "chrom": "6",
+      "pos": 26090951,
+      "ref": "C",
+      "alt": "G",
+      "rsid": "rs1799945",
+      "allele_freq": 0.14
+    }
+  ],
+  "vcf_path": null
+}

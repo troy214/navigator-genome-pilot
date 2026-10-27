@@ -1,0 +1,32 @@
+{
+  "case_id": "WILSON-ATP7B-H1069Q",
+  "clinical_summary": "Young adult with hepatic dysfunction and new neurological signs including tremor and dystonia, plus psychiatric changes. Slit-lamp examination reveals Kayser-Fleischer rings. Serum ceruloplasmin is low and 24-hour urinary copper excretion is markedly elevated.",
+  "hpo_terms": [
+    "Kayser-Fleischer ring",
+    "tremor",
+    "hepatic failure",
+    "dystonia"
+  ],
+  "variants": [
+    {
+      "gene": "ATP7B",
+      "hgvs": "NM_000053.4:c.3207C>A",
+      "chrom": "13",
+      "pos": 51934628,
+      "ref": "G",
+      "alt": "T",
+      "allele_freq": 0.0004
+    },
+    {
+      "gene": "HFE",
+      "hgvs": "NM_000410.4:c.187C>G",
+      "chrom": "6",
+      "pos": 26090951,
+      "ref": "C",
+      "alt": "G",
+      "rsid": "rs1799945",
+      "allele_freq": 0.14
+    }
+  ],
+  "vcf_path": null
+}

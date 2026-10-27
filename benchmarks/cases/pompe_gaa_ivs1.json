@@ -1,0 +1,32 @@
+{
+  "case_id": "POMPE-GAA-IVS1",
+  "clinical_summary": "Patient with progressive proximal limb-girdle weakness and prominent respiratory muscle involvement causing exertional dyspnea and orthopnea, with exercise intolerance. Serum creatine kinase is elevated. Muscle studies suggest a metabolic myopathy with glycogen accumulation.",
+  "hpo_terms": [
+    "proximal muscle weakness",
+    "respiratory insufficiency",
+    "elevated creatine kinase",
+    "exercise intolerance"
+  ],
+  "variants": [
+    {
+      "gene": "GAA",
+      "hgvs": "NM_000152.5:c.-32-13T>G",
+      "chrom": "17",
+      "pos": 80101535,
+      "ref": "T",
+      "alt": "G",
+      "allele_freq": 0.0025
+    },
+    {
+      "gene": "MTHFR",
+      "hgvs": "NM_005957.5:c.665C>T",
+      "chrom": "1",
+      "pos": 11796321,
+      "ref": "C",
+      "alt": "T",
+      "rsid": "rs1801133",
+      "allele_freq": 0.31
+    }
+  ],
+  "vcf_path": null
+}

@@ -1,0 +1,32 @@
+{
+  "case_id": "HBOC-BRCA1-185delAG",
+  "clinical_summary": "Woman with early-onset breast cancer and a striking multigenerational family history of breast and ovarian cancer on the same side, including a relative with bilateral breast cancer. Ancestry is Ashkenazi Jewish. Evaluated for a germline cancer-predisposition variant (research context, not clinical management).",
+  "hpo_terms": [
+    "breast carcinoma",
+    "ovarian neoplasm",
+    "neoplasm of the breast",
+    "family history of cancer"
+  ],
+  "variants": [
+    {
+      "gene": "BRCA1",
+      "hgvs": "NM_007294.4:c.68_69delAG",
+      "chrom": "17",
+      "pos": 43124027,
+      "ref": "CTT",
+      "alt": "C",
+      "allele_freq": 0.0001
+    },
+    {
+      "gene": "MTHFR",
+      "hgvs": "NM_005957.5:c.665C>T",
+      "chrom": "1",
+      "pos": 11796321,
+      "ref": "C",
+      "alt": "T",
+      "rsid": "rs1801133",
+      "allele_freq": 0.31
+    }
+  ],
+  "vcf_path": null
+}

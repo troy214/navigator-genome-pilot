@@ -1,0 +1,32 @@
+{
+  "case_id": "HEMA-F8-R2016W",
+  "clinical_summary": "Male infant with prolonged bleeding after circumcision and recurrent spontaneous joint bleeds (hemarthroses) with easy bruising. Coagulation studies show a prolonged activated partial thromboplastin time that corrects on mixing, with a markedly reduced factor VIII level. A maternal grandfather had a lifelong bleeding disorder.",
+  "hpo_terms": [
+    "prolonged bleeding after surgery",
+    "joint hemorrhage",
+    "bruising susceptibility",
+    "prolonged partial thromboplastin time"
+  ],
+  "variants": [
+    {
+      "gene": "F8",
+      "hgvs": "NM_000132.4:c.6046C>T",
+      "chrom": "X",
+      "pos": 154930311,
+      "ref": "G",
+      "alt": "A",
+      "allele_freq": 1e-05
+    },
+    {
+      "gene": "HFE",
+      "hgvs": "NM_000410.4:c.187C>G",
+      "chrom": "6",
+      "pos": 26090951,
+      "ref": "C",
+      "alt": "G",
+      "rsid": "rs1799945",
+      "allele_freq": 0.14
+    }
+  ],
+  "vcf_path": null
+}

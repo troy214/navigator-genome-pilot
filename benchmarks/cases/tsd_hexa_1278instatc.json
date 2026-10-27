@@ -1,0 +1,32 @@
+{
+  "case_id": "TSD-HEXA-1278insTATC",
+  "clinical_summary": "Infant of Ashkenazi Jewish ancestry, developing normally until ~6 months, then losing acquired motor skills with increasing hypotonia. An exaggerated startle response to sound is prominent, and fundoscopy shows a cherry-red spot at the macula. Progressive psychomotor regression follows.",
+  "hpo_terms": [
+    "developmental regression",
+    "exaggerated startle response",
+    "hypotonia",
+    "cherry red spot of the macula"
+  ],
+  "variants": [
+    {
+      "gene": "HEXA",
+      "hgvs": "NM_000520.6:c.1274_1277dupTATC",
+      "chrom": "15",
+      "pos": 72346580,
+      "ref": "C",
+      "alt": "CTATC",
+      "allele_freq": 5e-05
+    },
+    {
+      "gene": "MTHFR",
+      "hgvs": "NM_005957.5:c.665C>T",
+      "chrom": "1",
+      "pos": 11796321,
+      "ref": "C",
+      "alt": "T",
+      "rsid": "rs1801133",
+      "allele_freq": 0.31
+    }
+  ],
+  "vcf_path": null
+}

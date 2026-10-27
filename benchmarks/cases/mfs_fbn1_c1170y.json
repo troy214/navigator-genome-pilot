@@ -1,0 +1,33 @@
+{
+  "case_id": "MFS-FBN1-C1170Y",
+  "clinical_summary": "Tall, slender adolescent with long limbs, arachnodactyly (positive wrist and thumb signs), pectus excavatum, joint hypermobility, and high-arched palate. Ophthalmology documents ectopia lentis, and echocardiography shows aortic root dilation. A parent has a similar habitus and known aortic enlargement.",
+  "hpo_terms": [
+    "arachnodactyly",
+    "ectopia lentis",
+    "aortic root aneurysm",
+    "tall stature",
+    "pectus excavatum"
+  ],
+  "variants": [
+    {
+      "gene": "FBN1",
+      "hgvs": "NM_000138.5:c.3509G>A",
+      "chrom": "15",
+      "pos": 48479997,
+      "ref": "C",
+      "alt": "T",
+      "allele_freq": 1e-05
+    },
+    {
+      "gene": "MTHFR",
+      "hgvs": "NM_005957.5:c.665C>T",
+      "chrom": "1",
+      "pos": 11796321,
+      "ref": "C",
+      "alt": "T",
+      "rsid": "rs1801133",
+      "allele_freq": 0.31
+    }
+  ],
+  "vcf_path": null
+}

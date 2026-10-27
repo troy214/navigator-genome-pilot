@@ -4,7 +4,7 @@ Tracked with the same four categories Navigator enforces (Idea / Designed / Impl
 Verified), plus explicit Unknown. "Verified" means it was actually run successfully in this
 environment on the dev provider — NOT that it is validated against the production Meta models.
 
-_Last updated: Oct 27, 2026 (billing resolved; live demo now runs on the Meta Model API — `muse-spark-1.3`; benchmark re-run on Meta: top-1=100%, top-5=100% over 3 solved cases)._
+_Last updated: Oct 27, 2026 (billing resolved; live demo now runs on the Meta Model API — `muse-spark-1.3`; **benchmark expanded 3 → 15 solved public cases and re-run on Meta: top-1=100% (15/15), top-5=100% (15/15)**)._
 
 | Component | Category | Evidence |
 |-----------|----------|----------|
@@ -21,14 +21,14 @@ _Last updated: Oct 27, 2026 (billing resolved; live demo now runs on the Meta Mo
 | Agent 7 Red Team | **Verified** | isolated context (unit-tested: no leading hypothesis), raises critiques |
 | Agent 8 Dossier Writer | **Verified** | renders 4-page PDF with findings, ledger, uncertainty, research-use footer |
 | Coordinator pipeline | **Verified** | end-to-end run on 3 real cases; per-run logs persisted to `data/runs/` |
-| Benchmark scoring | **Verified** | top-1=100%, top-5=100% over 3 solved cases (`benchmarks/results/`) |
+| Benchmark scoring | **Verified** | top-1=100%, top-5=100% over **15** solved public cases (`benchmarks/results/scores.json`) |
 | Demo web app | **Verified** | agent board + evidence ledger + dossier view; run + PDF download work |
 | Public hosting | **Verified** | live at https://navigator-genome.abacusai.cloud (nginx + systemd), crawl-verified |
 | Public GitHub repo (hackathon req) | **Verified** | published public at https://github.com/troy214/navigator-genome-pilot (main, 9 commits, 67 files, no secrets) |
 | Offline test suite | **Verified** | 11 tests pass with LLM + HTTP mocked (`pytest`) |
 | Meta Model API — key + catalog | **Verified** | Troy's key authenticates to `https://api.meta.ai/v1`; `GET /models` returns the live catalog; real model id is `muse-spark-1.3` (placeholders `muse-spark`/`muse-spark-open-1026` were wrong and are now corrected in `config/agents.yaml`) |
 | Meta Model API — live inference | **Verified** | billing resolved; live service runs `PROVIDER=meta` on `muse-spark-1.3`. Real chat completions succeed; `/lab-data` serves 8 agents on Meta. |
-| Benchmark on Meta models | **Verified** | re-run 2026-10-27 on Meta: top-1=100%, top-5=100% over 3 solved cases (CF/CFTR, PKU/PAH, SCD/HBB); `benchmarks/results/scores.json` shows `provider: meta` per case. |
+| Benchmark on Meta models | **Verified** | **expanded to 15 solved public cases and re-run 2026-10-27 on Meta (`muse-spark-1.3`): top-1=100% (15/15), top-5=100% (15/15)**; `benchmarks/results/scores.json` shows `provider: meta` for every case, and a persisted run (`data/runs/WILSON-ATP7B-H1069Q_*`) records `provider: meta`. See case list below. |
 | AWS deployment (prod backbone) | **Designed** | documented in `infra/aws/`; dev demo runs on this VM, not AWS yet |
 | S3 dossier storage | **Designed** | destination computed + documented; upload code is a TODO pending bucket |
 
@@ -36,3 +36,51 @@ _Last updated: Oct 27, 2026 (billing resolved; live demo now runs on the Meta Mo
 remaining production rows (Meta inference, AWS deployment) stay **Designed** until Troy runs
 them in the Meta/AWS environment — this is the honest line between "proven on dev" and
 "proven in production."
+
+
+
+---
+
+## Benchmark case set — 15 solved public cases (Verified on Meta)
+
+All cases are **already-solved, published, public** monogenic rare diseases — textbook
+clinical presentations (HPO-mappable), **not real patients**. Each case gives the agents a
+clinical picture plus a VCF-style variant set (the real rare causal variant mixed with a
+common benign distractor); the causal gene/variant is held in `benchmarks/cases/_answers.json`,
+**hidden from the agents** and used only by the scorer.
+
+Run: `benchmarks/results/scores.json`, generated `2026-10-27T21:12:05Z`, **provider `meta`
+(`muse-spark-1.3`) on every case**. Measured: **top-1 = 100% (15/15), top-5 = 100% (15/15)**.
+Mutation types span missense, nonsense, small indels/duplications, a trinucleotide repeat
+expansion, a splice variant, and a gene deletion; inheritance spans AR, AD, XLR and XLD.
+
+| # | Case ID | Disease | Gene | Canonical variant | Mutation type | Top-1 (Meta) |
+|---|---------|---------|------|-------------------|---------------|:---:|
+| 1 | CF-CFTR-F508del | Cystic fibrosis | CFTR | p.Phe508del (c.1521_1523delCTT) | in-frame deletion | ✓ |
+| 2 | SCD-HBB-E6V | Sickle cell disease | HBB | p.Glu6Val (c.20A>T) | missense | ✓ |
+| 3 | PKU-PAH | Phenylketonuria | PAH | c.1222C>T (p.Arg408Trp) | missense | ✓ |
+| 4 | DMD-DMD-R1577X | Duchenne muscular dystrophy | DMD | c.4729C>T (p.Arg1577Ter) | nonsense (XLR) | ✓ |
+| 5 | HEMA-F8-R2016W | Hemophilia A | F8 | c.6046C>T (p.Arg2016Trp) | missense (XLR) | ✓ |
+| 6 | TSD-HEXA-1278insTATC | Tay-Sachs disease | HEXA | c.1274_1277dupTATC (p.Tyr427IlefsTer5) | frameshift insertion | ✓ |
+| 7 | SMA-SMN1-EX7DEL | Spinal muscular atrophy type 1 | SMN1 | homozygous exon-7 loss (c.840C>T) | deletion/gene conversion | ✓ |
+| 8 | MFS-FBN1-C1170Y | Marfan syndrome | FBN1 | c.3509G>A (p.Cys1170Tyr) | missense (AD) | ✓ |
+| 9 | FH-LDLR-G592E | Familial hypercholesterolemia | LDLR | c.1775G>A (p.Gly592Glu) | missense (AD) | ✓ |
+| 10 | RETT-MECP2-T158M | Rett syndrome | MECP2 | c.473C>T (p.Thr158Met) | missense hotspot (XLD) | ✓ |
+| 11 | HD-HTT-CAG-EXP | Huntington disease | HTT | expanded CAG repeat (~42) exon 1 | repeat expansion (AD) | ✓ |
+| 12 | POMPE-GAA-IVS1 | Pompe disease (late-onset) | GAA | c.-32-13T>G | splice (AR) | ✓ |
+| 13 | WILSON-ATP7B-H1069Q | Wilson disease | ATP7B | c.3207C>A (p.His1069Gln) | missense (AR) | ✓ |
+| 14 | HBOC-BRCA1-185delAG | Hereditary breast/ovarian cancer | BRCA1 | c.68_69delAG (185delAG) | frameshift deletion (AD) | ✓ |
+| 15 | VHL-VHL-R167W | Von Hippel-Lindau disease | VHL | c.499C>T (p.Arg167Trp) | missense (AD) | ✓ |
+
+**Excluded cases:** none — all 15 authored cases ran end-to-end on Meta and scored.
+
+**Honest scope of this result (Verified vs Unknown):**
+- **Verified:** on these 15 published, already-solved cases the pipeline ranked the correct
+  causal gene first on `muse-spark-1.3`. This measures the system's ability to re-derive
+  *known* answers from a clinical picture + variant list, with real evidence pulled live from
+  Europe PMC / MyVariant / ClinVar / gnomAD / HPO.
+- **Unknown (not claimed):** performance on *unsolved* or novel cases, on harder
+  needle-in-a-haystack variant sets (dozens–hundreds of candidates per case), on
+  non-monogenic/complex disease, and inter-run variance at scale. These are out of scope for
+  this benchmark and remain Unknown. Navigator stays a **research tool** — it outputs ranked
+  hypotheses with explicit uncertainty, not diagnoses.
