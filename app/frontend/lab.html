@@ -219,7 +219,7 @@
 
     // Cache-buster for voice clips — bump when a voice file is regenerated so
     // browsers/CDN never replay a stale clip under the same filename.
-    const AV = '?v=20261027d';
+    const AV = '?v=20261027e';
 
     // ---- Preload one HTMLAudioElement per agent ----
     AGENTS.forEach(a=>{
@@ -334,7 +334,7 @@
         job:'I coordinate all eight agents — from intake through independent red-team review — and synthesize the final verdict.',
         status: data.status || 'done',
         finding:`Leading candidate (hypothesis): ${candText} — moderate confidence. Requires expert review and orthogonal confirmation. Navigator assembles the evidence; it does not diagnose.`,
-        spoken:"I'm Troy Burns, a real human research scientist. Our team built this Navigator Genome Pilot for the Meta Hackathon. I'm the Director of the Navigator research pilot. I coordinate all eight agents and I keep what is verified separate from what is only a hypothesis. On this case the leading candidate is "+candText+", a research hypothesis only — it requires expert review. Navigator assembles the evidence. It does not diagnose.",
+        spoken:"I'm the Director of the Navigator research pilot. I coordinate all eight agents and I keep what is verified separate from what is only a hypothesis. On this case the leading candidate is "+candText+", a research hypothesis only — it requires expert review. Navigator assembles the evidence. It does not diagnose.",
         evidence_count:(data.agents||[]).length
       };
       // preload the Director's recorded voice once (same system as the agents)
