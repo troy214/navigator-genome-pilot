@@ -10,3 +10,8 @@ benchmarks/results/*
 .DS_Store
 .pytest_cache/
 deploy/navigator.env
+# demo rebuild scratch + backups (keep repo lean)
+docs/rebuild/
+docs/navigator_demo_daniel_backup.mp4
+docs/navigator_demo_v2.mp4
+docs/vo_backup_daniel/
