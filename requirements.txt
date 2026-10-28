@@ -7,8 +7,11 @@ PyYAML>=6.0
 # Meta Model API is OpenAI-compatible; the openai client works against its base_url
 openai>=1.30
 
-# Genomics / data (used by the pipeline stubs)
-# pysam>=0.22          # uncomment when VCF parsing is implemented
+# Genomics / data (streaming data layer — Stage 01: Ingest & Normalize)
+pysam>=0.22            # VCF streaming + multiallelic split fallback
+# bcftools (system package, e.g. `apt-get install bcftools`) is preferred for
+# `norm -m-` split + left-align; pysam is the pure-Python fallback. If neither is
+# installed, src/pipeline/vcf.py falls back to the dependency-free line reader.
 
 # Demo app backend
 fastapi>=0.110

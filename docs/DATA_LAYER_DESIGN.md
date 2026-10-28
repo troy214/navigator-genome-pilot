@@ -80,4 +80,54 @@ beyond pointing Intake at the gate's output.
 
 ---
 
+## Stage 01 — implementation notes (built)
+
+**Status:** Stage 01 (Ingest & Normalize) is implemented and verified offline.
+
+**Tool availability (this environment):**
+- `bcftools` **1.19** (system, `/usr/bin/bcftools`) — preferred engine.
+- `pysam` **0.24.1** (`/opt/abacus-python`, `pip`) — fallback engine, also handles bgzip input.
+- Both are resolvable by the live `navigator` systemd service (service `PATH` includes
+  `/usr/bin`; the service Python is `/opt/abacus-python`).
+
+**Code paths added:**
+- `src/pipeline/ingest.py` (new) — the deterministic, non-LLM Stage 01 module:
+  - `tool_availability()` — cached capability check (`bcftools` / `pysam` versions).
+  - `inspect_header()` — validates the header and detects the reference build
+    (GRCh38/GRCh37, incl. `hg38`/`hg19` and `##contig ... assembly=`); unknown build is
+    recorded, never fatal.
+  - `normalize_to_lines()` — streams normalized VCF data lines: `bcftools norm -m-`
+    (split multiallelics) with optional `-f <ref.fasta>` for left-alignment; falls back to
+    `pysam.VariantFile` streaming + text-level multiallelic split; raises
+    `NormalizationUnavailable` if neither tool is present.
+  - Header-light demo/snippet VCFs are handled by streaming them through a temp copy with
+    missing standard `##contig` lines injected (constant memory), so strict `bcftools`
+    does not reject records.
+- `src/pipeline/vcf.py` (extended, **non-breaking**) — `parse_vcf` / `iter_variants` now
+  take optional `normalize=True` and `ref_fasta=None`. When a tool is available the
+  normalized path runs; on any failure (or no tool) it transparently falls back to the
+  original dependency-free line reader. A shared `_variant_from_cols()` guarantees a given
+  record yields an identical `Variant` on either path. **`src/agents/intake.py` was not
+  changed** — it still calls `parse_vcf(p)` and now gets normalization for free.
+- `tests/test_ingest.py` (new, offline) — 11 tests: GRCh38/GRCh37 build detection,
+  unknown-build-not-fatal, multiallelic split (bcftools and pysam-only paths), `.vcf.gz`
+  streaming, graceful fallback when tools are simulated absent, per-allele `AF` subsetting,
+  and proof the bundled demo VCF parses identically via the normalized path.
+
+**Verification:** `tests/test_ingest.py` 11/11 pass; full suite 22/22 pass (no regression).
+Live service restarted and healthy (HTTP 200); the demo VCF (`samples/sample_unknown.vcf`)
+parses and runs through the Intake agent via the normalized path.
+
+**Known limitations (honest scope):**
+- **Left-alignment requires a reference FASTA.** None is bundled, so for the demo inputs
+  Stage 01 currently performs *split-multiallelics / decompose only* and logs that
+  left-align was skipped. Supplying `ref_fasta=` (a matching GRCh37/38 FASTA) enables full
+  left-alignment via `bcftools norm -f`.
+- The pysam fallback splits multiallelics at the text level (preserving values exactly) but
+  does not left-align even with a FASTA — use `bcftools` for left-alignment.
+- Stages 02–06 (QC filters, Parquet columnar store, tabix index, annotation join, the
+  deterministic rank gate) are **not** built yet; this delivers Stage 01 only.
+
+---
+
 *Research use only — not a diagnostic system, not medical advice.*
