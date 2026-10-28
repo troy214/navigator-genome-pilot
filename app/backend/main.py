@@ -327,6 +327,10 @@ async def run_new_case(
         result = Coordinator().run(case)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"pipeline error: {type(e).__name__}: {e}")
+    # Signal to the UI whether any genomic input (VCF or candidate variants) was provided,
+    # so a symptom-only submission can show an accurate empty-state instead of a bare "0".
+    if isinstance(result, dict):
+        result["variant_count"] = len(parsed_variants) + (1 if vcf_path else 0)
     return JSONResponse(result)
 
 

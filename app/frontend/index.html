@@ -209,10 +209,14 @@
 
       // dossier
       const dsr = data.dossier || {};
+      const nf = (dsr.findings||[]).length;
+      const hasVariantInput = (data.variant_count && data.variant_count > 0);
       document.getElementById("dossierMeta").innerHTML =
-        `<b>Case ${esc(dsr.case_id||"")}</b> — ${(dsr.findings||[]).length} ranked candidate hypothesis(es).`
+        `<b>Case ${esc(dsr.case_id||"")}</b> — ${nf} ranked candidate hypothesis(es).`
         + (data.sources_unavailable && data.sources_unavailable.length ?
-           `<div style="color:var(--amber);margin-top:4px;">Sources unavailable: ${data.sources_unavailable.map(esc).join(", ")}</div>` : "");
+           `<div style="color:var(--amber);margin-top:4px;">Sources unavailable: ${data.sources_unavailable.map(esc).join(", ")}</div>` : "")
+        + ((nf === 0 && !hasVariantInput) ?
+           `<div style="color:var(--amber);margin-top:8px;max-width:640px;">No genomic variants were supplied, so there are no genes to rank. The pipeline still ran all 8 agents and collected the <b>phenotype evidence</b> below. To obtain ranked gene candidates for an unknown case, <b>upload a VCF file</b> (primary input) or list candidate variants.</div>` : "");
       document.getElementById("findings").innerHTML = (dsr.findings||[]).map(f=>`
         <div class="finding">
           <h3>#${f.rank} ${esc(f.gene||"?")} ${f.variant?("— "+esc(f.variant)):""}
