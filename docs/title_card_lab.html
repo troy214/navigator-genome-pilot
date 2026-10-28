@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; }
+  .stage {
+    position:relative; width:1920px; height:1080px;
+    font-family:'Inter', system-ui, -apple-system, sans-serif;
+    background:#0a1424 url('file:///home/ubuntu/navigator-genome-pilot/app/frontend/assets/lab_background.png') center/cover no-repeat;
+  }
+  /* Dark overlay so title text stays readable over the photo */
+  .overlay {
+    position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse at center, rgba(6,12,24,.45) 0%, rgba(6,12,24,.74) 70%, rgba(4,9,18,.88) 100%),
+      linear-gradient(180deg, rgba(5,10,20,.55) 0%, rgba(5,10,20,.30) 40%, rgba(5,10,20,.80) 100%);
+  }
+  .content {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+  }
+  h1 {
+    font-size:188px; font-weight:800; letter-spacing:6px; line-height:1;
+    background:linear-gradient(180deg,#eaf4ff 0%,#9fccff 55%,#4c8bf5 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 8px 40px rgba(0,0,0,.45);
+    margin-bottom:34px;
+  }
+  .sub {
+    font-size:46px; font-weight:600; color:#e9f1fb; letter-spacing:.5px;
+    text-shadow:0 2px 14px rgba(0,0,0,.65); margin-bottom:28px;
+  }
+  .tag {
+    font-size:26px; font-weight:700; letter-spacing:10px; color:#9fc0e6;
+    text-shadow:0 2px 10px rgba(0,0,0,.7);
+  }
+  .pill {
+    position:absolute; left:50%; bottom:70px; transform:translateX(-50%);
+    font-size:26px; font-weight:600; color:#f0c674; letter-spacing:.3px;
+    padding:16px 34px; border:1px solid rgba(210,153,34,.55);
+    background:rgba(12,16,10,.62); border-radius:40px;
+    text-shadow:0 2px 8px rgba(0,0,0,.6);
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="overlay"></div>
+    <div class="content">
+      <h1>NAVIGATOR</h1>
+      <div class="sub">An eight-agent research tool for interpreting rare-disease genomes</div>
+      <div class="tag">META GLOBAL AI DEVELOPER HACKATHON</div>
+    </div>
+    <div class="pill">&#9888; Research use only — not a diagnostic system, not medical advice</div>
+  </div>
+</body>
+</html>
