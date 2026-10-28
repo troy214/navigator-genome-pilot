@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    width:1680px; height:830px;
+    font-family:'Inter',sans-serif;
+    background:radial-gradient(1200px 700px at 50% -10%, #16315e 0%, #0b1a33 45%, #060f1f 100%);
+    color:#e8eefc; padding:40px 54px 20px; position:relative;
+  }
+  .head { text-align:center; margin-bottom:10px; }
+  .kicker { font-size:15px; letter-spacing:4px; color:#7fa8e8; font-weight:600; text-transform:uppercase; }
+  h1 { font-size:40px; font-weight:800; letter-spacing:.5px; margin:6px 0 4px;
+       background:linear-gradient(90deg,#bcd4ff,#79a6f0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { font-size:17px; color:#9fb4d6; font-weight:500; }
+  .contrast { display:inline-block; margin-top:12px; font-size:14px; font-weight:600; color:#ffd27a;
+     border:1px solid rgba(255,196,97,.45); background:rgba(255,196,97,.08); padding:7px 16px; border-radius:999px; }
+
+  .row { display:flex; align-items:stretch; gap:16px; }
+  .rail { display:flex; flex-direction:column; justify-content:center; align-items:center; width:132px;
+     border-radius:16px; padding:16px 10px; text-align:center; }
+  .rail.in  { background:linear-gradient(180deg,#24324d,#1a2740); border:1px solid #3a4e73; }
+  .rail.out { background:linear-gradient(180deg,#143a2e,#10281f); border:1px solid #2f6b50; }
+  .rail .t { font-size:15px; font-weight:700; margin-bottom:8px; }
+  .rail .d { font-size:12px; line-height:1.45; color:#b9c8e2; }
+  .rail.out .d { color:#aee3c6; }
+
+  .stages { flex:1; }
+  .lane-label { font-size:13px; letter-spacing:3px; text-transform:uppercase; color:#8fb0e6; font-weight:700;
+     text-align:center; margin:14px 0 10px; }
+  .lane-label span { color:#5f7cad; font-weight:500; letter-spacing:1px; text-transform:none; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .card { background:linear-gradient(180deg,#132543,#0e1d36); border:1px solid #27406b; border-radius:14px;
+     padding:15px 16px; position:relative; overflow:hidden; }
+  .card:before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:#4f86e0; }
+  .card.gate:before { background:#f0a63a; }
+  .card .n { font-family:'JetBrains Mono',monospace; font-size:12px; color:#6f9af0; font-weight:600; }
+  .card .ct { font-size:18px; font-weight:700; margin:3px 0 7px; }
+  .card.gate .ct { color:#ffce85; }
+  .card .cd { font-size:12.5px; line-height:1.5; color:#c2d1ea; }
+  .card .tools { margin-top:9px; display:flex; flex-wrap:wrap; gap:5px; }
+  .chip { font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#cfe0ff; background:rgba(79,134,224,.15);
+     border:1px solid rgba(79,134,224,.4); border-radius:6px; padding:2px 7px; }
+  .card.gate .chip { color:#ffe3b0; background:rgba(240,166,58,.14); border-color:rgba(240,166,58,.4); }
+
+  .candidate { margin:16px 0 4px; text-align:center; }
+  .candidate .pill { display:inline-block; background:linear-gradient(90deg,#1c5a3e,#14492f);
+     border:1px solid #39805d; border-radius:12px; padding:12px 26px; }
+  .candidate .pt { font-size:17px; font-weight:700; color:#bff0d4; }
+  .candidate .pd { font-size:12.5px; color:#8fc7a9; margin-top:2px; }
+  .arrow { text-align:center; color:#5f7cad; font-size:20px; line-height:1; margin:2px 0; }
+
+  .principle { margin-top:18px;
+     background:rgba(10,20,38,.6); border:1px solid #27406b; border-radius:12px; padding:14px 20px;
+     display:flex; align-items:center; gap:16px; }
+  .principle .big { font-size:15px; font-weight:700; color:#ffd27a; white-space:nowrap; }
+  .principle .txt { font-size:13px; line-height:1.5; color:#b9c8e2; }
+  .foot { margin-top:14px; text-align:center; font-size:11.5px; color:#5a6f92; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="kicker">Navigator Platform &nbsp;/&nbsp; Architecture Map</div>
+    <h1>Genomic Streaming Data Layer</h1>
+    <div class="sub">Deterministic ingest &rarr; normalize &rarr; index &rarr; filter &rarr; rank &mdash; <b>before any agent sees a variant</b></div>
+    <div class="contrast">The deliberate move: a principled data substrate &mdash; not +16 more agents</div>
+  </div>
+
+  <div class="lane-label">Streaming Data Layer <span>(cheap, reproducible, audited compute)</span></div>
+
+  <div class="row">
+    <div class="rail in">
+      <div class="t">Raw genome</div>
+      <div class="d">VCF / VCF.gz / BCF<br>WGS &asymp;5M &middot; WES &asymp;100k variants<br>GRCh37 / GRCh38</div>
+    </div>
+
+    <div class="stages">
+      <div class="grid">
+        <div class="card">
+          <div class="n">01</div><div class="ct">Ingest &amp; Normalize</div>
+          <div class="cd">Validate header &amp; reference build. Left-align indels, split multiallelics, decompose. Stream records &mdash; never load the whole VCF into RAM.</div>
+          <div class="tools"><span class="chip">bcftools norm</span><span class="chip">pysam.VariantFile</span></div>
+        </div>
+        <div class="card">
+          <div class="n">02</div><div class="ct">QC &amp; Hard Filters</div>
+          <div class="cd">Keep FILTER=PASS. Enforce depth (DP), genotype quality (GQ), allele balance. Mask low-complexity / known-artifact regions.</div>
+          <div class="tools"><span class="chip">bcftools view</span><span class="chip">region BED mask</span></div>
+        </div>
+        <div class="card">
+          <div class="n">03</div><div class="ct">Columnar Store</div>
+          <div class="cd">Write normalized variants to Parquet, partitioned by chromosome. Vectorized scans + predicate push-down instead of re-parsing text.</div>
+          <div class="tools"><span class="chip">pyarrow</span><span class="chip">Parquet / chrom</span></div>
+        </div>
+        <div class="card">
+          <div class="n">04</div><div class="ct">Index</div>
+          <div class="cd">bgzip + tabix for region queries. Lightweight gene&rarr;variant and rsID&rarr;variant maps for O(1) agent lookups.</div>
+          <div class="tools"><span class="chip">tabix</span><span class="chip">gene / rsID index</span></div>
+        </div>
+        <div class="card">
+          <div class="n">05</div><div class="ct">Annotate (join)</div>
+          <div class="cd">Join population AF, clinical significance, in-silico scores and phenotype panels. Cached locally (existing data/cache pattern).</div>
+          <div class="tools"><span class="chip">gnomAD</span><span class="chip">ClinVar</span><span class="chip">CADD</span><span class="chip">HPO panels</span></div>
+        </div>
+        <div class="card gate">
+          <div class="n">06 &middot; GATE</div><div class="ct">Filter &amp; Rank</div>
+          <div class="cd">Rarity (gnomAD AF), consequence severity, phenotype match, inheritance model (de novo / recessive / comp-het). Emits a ranked, provenance-logged candidate set.</div>
+          <div class="tools"><span class="chip">deterministic</span><span class="chip">reproducible</span><span class="chip">logged</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rail out">
+      <div class="t">Agent swarm</div>
+      <div class="d">8 agents<br>reason over<br><b>10s&ndash;100s</b> curated<br>candidates &mdash;<br>never millions</div>
+    </div>
+  </div>
+
+  <div class="candidate">
+    <div class="arrow">&#9660;</div>
+    <div class="pill">
+      <div class="pt">Candidate set &nbsp;&middot;&nbsp; ranked &amp; evidence-linked</div>
+      <div class="pd">Tens to low hundreds of variants, each with provenance &rarr; Intake / Filtering / Database / &hellip; agents &rarr; Evidence dossier</div>
+    </div>
+  </div>
+
+  <div class="principle">
+    <div class="big">Compute down to candidates<br>before cognition</div>
+    <div class="txt">Heavy, deterministic variant reduction belongs in cheap, auditable data engineering &mdash; not in expensive, non-reproducible LLM reasoning. The agents stay lean and trustworthy because the data layer hands them a small, well-provenanced, reproducible candidate set. This is reproducibility the research-tool framing requires: the filtering is logged and re-runnable, not a black box.</div>
+  </div>
+
+  <div class="foot">Replaces the pilot's line-by-line reader (src/pipeline/vcf.py, 10k-variant cap, no normalization/index/rank gate) &middot; Research use only &mdash; not a diagnostic system, not medical advice</div>
+</body>
+</html>
