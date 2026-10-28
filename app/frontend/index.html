@@ -44,6 +44,20 @@
     a.btn { display:inline-block; text-decoration:none; }
     .muted { color:var(--muted); font-size:12px; }
     .src { color:var(--muted); font-size:11px; word-break:break-word; }
+    .tabs { display:flex; gap:4px; padding:12px 24px 0; border-bottom:1px solid var(--line); }
+    .tab { background:transparent; border:1px solid transparent; border-bottom:none; border-radius:8px 8px 0 0;
+           padding:8px 16px; color:var(--muted); cursor:pointer; font-size:13px; font-weight:600; }
+    .tab:hover { color:var(--text); }
+    .tab.active { background:var(--panel2); border-color:var(--line); color:var(--text); }
+    .controls.newcase { display:block; }
+    .field { margin-bottom:14px; max-width:720px; }
+    .field label { display:block; font-size:13px; font-weight:600; margin-bottom:5px; color:#c7cfdb; }
+    .field .opt { font-weight:400; color:var(--muted); font-size:11px; }
+    .field input[type=text], .field textarea { width:100%; font-size:13px; padding:8px 10px; border-radius:8px;
+           border:1px solid var(--line); background:var(--panel2); color:var(--text); font-family:inherit; resize:vertical; }
+    .field input[type=file] { font-size:12px; color:var(--muted); }
+    .field .hint { display:block; color:var(--muted); font-size:11px; margin-top:4px; line-height:1.5; }
+    .field code { background:var(--panel2); border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:11px; }
   </style>
 </head>
 <body>
@@ -55,11 +69,63 @@
     <div class="notice">⚠ Research use only — NOT a diagnostic system and NOT medical advice. Every finding is a hypothesis with explicit uncertainty labels.</div>
   </header>
 
-  <div class="controls">
-    <label class="muted">Case:</label>
+  <div class="tabs" role="tablist" aria-label="Case source">
+    <button class="tab active" id="tab-bench" role="tab" aria-selected="true" aria-controls="panel-bench" onclick="switchTab('bench')">📚 Benchmark case</button>
+    <button class="tab" id="tab-new" role="tab" aria-selected="false" aria-controls="panel-new" onclick="switchTab('new')">✍ Submit a new case</button>
+  </div>
+
+  <div class="controls" id="panel-bench" role="tabpanel" aria-labelledby="tab-bench">
+    <label class="muted" for="caseSelect">Benchmark case:</label>
     <select id="caseSelect"></select>
     <button class="primary" id="runBtn" onclick="runCase()">▶ Run pipeline</button>
     <span class="muted" id="status"></span>
+  </div>
+
+  <div class="controls newcase" id="panel-new" role="tabpanel" aria-labelledby="tab-new" hidden>
+    <form id="newCaseForm" onsubmit="return submitNewCase(event)">
+      <p class="muted" style="margin:0 0 14px; max-width:720px;">
+        Enter an <b>unknown</b> case to generate a real ranked research dossier. The primary input
+        for a truly unknown genome is a <b>VCF file</b>; a clinical summary and HPO terms sharpen the
+        analysis. Candidate variants are optional.
+      </p>
+      <div class="notice" style="color:var(--amber); margin:0 0 16px;">
+        ⚠ Navigator is a <b>research tool</b>. It returns a research hypothesis with explicit
+        uncertainty — <b>not a diagnosis</b> and not medical advice.
+      </div>
+
+      <div class="field">
+        <label for="f-caseid">Case ID <span class="opt">(optional)</span></label>
+        <input type="text" id="f-caseid" placeholder="Leave blank to auto-generate (e.g. new-1730000000)" />
+      </div>
+
+      <div class="field">
+        <label for="f-summary">Clinical summary</label>
+        <textarea id="f-summary" rows="4" placeholder="Free-text description of the patient's presentation, onset, family history, key findings…"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="f-hpo">HPO terms</label>
+        <textarea id="f-hpo" rows="3" placeholder="HP:0001250&#10;HP:0001263"></textarea>
+        <small class="hint">One term per line, or comma-separated. Examples: <code>HP:0001250</code> (seizure), <code>HP:0001263</code> (global developmental delay).</small>
+      </div>
+
+      <div class="field">
+        <label for="f-vcf">VCF upload <span class="opt">(optional, primary input for an unknown genome)</span></label>
+        <input type="file" id="f-vcf" accept=".vcf,.vcf.gz" />
+        <small class="hint">Accepts <code>.vcf</code> or <code>.vcf.gz</code>, up to 25 MB. Variants are parsed automatically from the file.</small>
+      </div>
+
+      <div class="field">
+        <label for="f-variants">Candidate variants <span class="opt">(optional — usually empty for unknown cases)</span></label>
+        <textarea id="f-variants" rows="3" placeholder="CFTR c.1521_1523delCTT&#10;BRCA1 c.68_69delAG 17 43124027 AG A"></textarea>
+        <small class="hint">One variant per line: <code>gene hgvs</code> (minimum), optionally followed by <code>chrom pos ref alt rsid</code>. Fields separated by spaces or commas.</small>
+      </div>
+
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <button class="primary" id="newRunBtn" type="submit">▶ Run new case</button>
+        <span class="muted" id="newStatus"></span>
+      </div>
+    </form>
   </div>
 
   <main>
@@ -159,6 +225,52 @@
         `<a class="btn" href="/dossier/${encodeURIComponent(dsr.case_id||"")}" target="_blank">
            <button class="primary">⬇ Download dossier PDF</button></a>
          <div class="muted" style="margin-top:8px">Research use only — independently verify all findings.</div>`;
+    }
+
+    function switchTab(which){
+      const isBench = which === "bench";
+      document.getElementById("tab-bench").classList.toggle("active", isBench);
+      document.getElementById("tab-new").classList.toggle("active", !isBench);
+      document.getElementById("tab-bench").setAttribute("aria-selected", isBench);
+      document.getElementById("tab-new").setAttribute("aria-selected", !isBench);
+      document.getElementById("panel-bench").hidden = !isBench;
+      document.getElementById("panel-new").hidden = isBench;
+    }
+
+    async function submitNewCase(evt){
+      evt.preventDefault();
+      const btn = document.getElementById("newRunBtn"); btn.disabled = true;
+      const status = document.getElementById("newStatus");
+      const fd = new FormData();
+      fd.append("case_id", document.getElementById("f-caseid").value.trim());
+      fd.append("clinical_summary", document.getElementById("f-summary").value);
+      fd.append("hpo_terms", document.getElementById("f-hpo").value);
+      fd.append("variants", document.getElementById("f-variants").value);
+      const vcfInput = document.getElementById("f-vcf");
+      if (vcfInput.files && vcfInput.files[0]) fd.append("vcf", vcfInput.files[0]);
+
+      status.textContent = "Submitting new case — running 8-agent pipeline (live queries to Europe PMC / ClinVar / gnomAD / HPO)…";
+      status.style.color = "var(--muted)";
+      // show all agents as working (reuse existing animation)
+      const working = {}; AGENTS.forEach(([k])=>working[k]={status:"working",note:""}); renderAgents(working);
+      try {
+        const res = await fetch("/run-new", {method:"POST", body: fd});
+        if(!res.ok){
+          let detail = "HTTP "+res.status;
+          try { const err = await res.json(); if(err.detail) detail = err.detail; } catch(_){}
+          throw new Error(detail);
+        }
+        const data = await res.json();
+        renderResult(data);
+        const nfind = (data.dossier && data.dossier.findings ? data.dossier.findings.length : 0);
+        status.textContent = `Done in ${data.total_elapsed_s}s — ${nfind} ranked finding(s) (provider: ${data.provider}).`;
+        status.style.color = "var(--green)";
+      } catch(e){
+        status.textContent = "Error: "+e.message;
+        status.style.color = "var(--red)";
+        const err={}; AGENTS.forEach(([k])=>err[k]={status:"error",note:""}); renderAgents(err);
+      } finally { btn.disabled = false; }
+      return false;
     }
 
     function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }

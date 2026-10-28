@@ -1,0 +1,7 @@
+##fileformat=VCFv4.2
+##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+7	117559593	rs113993960	CTT	C	100	PASS	ANN=C|frameshift_variant|HIGH|CFTR|c.1521_1523delCTT;AF=0.0001
+12	102855239	.	G	A	80	PASS	ANN=A|missense_variant|MODERATE|PAH|c.728G>A;AF=0.00005
+1	11856378	rs1801133	G	A	60	PASS	ANN=A|missense_variant|MODERATE|MTHFR|c.665C>T;AF=0.3

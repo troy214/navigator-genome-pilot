@@ -9,15 +9,23 @@ Endpoints:
 """
 from __future__ import annotations
 import json
+import re
+import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import settings
 from src.orchestrator.coordinator import Coordinator
-from src.utils.schema import CaseInput
+from src.utils.schema import CaseInput, Variant
+
+# Max size (bytes) for an uploaded VCF. Keep in sync with nginx client_max_body_size
+# in deploy/navigator-genome.conf.
+MAX_VCF_BYTES = 25 * 1024 * 1024  # 25 MB
+UPLOADS_DIR = settings.DATA_DIR / "uploads"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="Navigator Genome Pilot", version="1.0.0")
 
@@ -200,6 +208,126 @@ def list_cases():
         except Exception:
             continue
     return {"cases": out}
+
+
+def _parse_hpo_terms(raw: str) -> list[str]:
+    """Parse HPO terms entered one-per-line and/or comma-separated into a clean list."""
+    if not raw:
+        return []
+    tokens = re.split(r"[,\n\r]+", raw)
+    out: list[str] = []
+    for t in tokens:
+        t = t.strip()
+        if t and t not in out:
+            out.append(t)
+    return out
+
+
+def _parse_variants(raw: str) -> list[Variant]:
+    """Parse a lightweight variants textarea into Variant records.
+
+    One variant per line. Fields are separated by commas OR whitespace, in order:
+        gene  hgvs  [chrom]  [pos]  [ref]  [alt]  [rsid]
+    Only `gene` is required per line; everything else is optional. Blank lines ignored.
+    """
+    variants: list[Variant] = []
+    if not raw:
+        return variants
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        parts = [p for p in re.split(r"[,\t]+|\s{1,}", line) if p]
+        if not parts:
+            continue
+        gene = parts[0]
+        hgvs = parts[1] if len(parts) > 1 else None
+        chrom = parts[2] if len(parts) > 2 else None
+        pos = None
+        if len(parts) > 3:
+            try:
+                pos = int(parts[3])
+            except ValueError:
+                pos = None
+        ref = parts[4] if len(parts) > 4 else None
+        alt = parts[5] if len(parts) > 5 else None
+        rsid = parts[6] if len(parts) > 6 else None
+        variants.append(Variant(gene=gene, hgvs=hgvs, chrom=chrom, pos=pos,
+                                ref=ref, alt=alt, rsid=rsid))
+    return variants
+
+
+@app.post("/run-new")
+async def run_new_case(
+    case_id: str = Form(""),
+    clinical_summary: str = Form(""),
+    hpo_terms: str = Form(""),
+    variants: str = Form(""),
+    vcf: UploadFile | None = File(None),
+):
+    """Accept a researcher-submitted UNKNOWN case (multipart/form-data) and run the pipeline.
+
+    An optional VCF file is saved under data/uploads/ and its path is passed as vcf_path,
+    so the Intake agent parses it into variants. Returns the same result JSON shape as /run.
+    """
+    cid = (case_id or "").strip()
+    if not cid:
+        cid = f"new-{int(time.time())}"
+    # Sanitize case_id for safe filesystem use (dossier PDF uses the same scheme).
+    cid = re.sub(r"[^A-Za-z0-9._-]", "-", cid)[:80] or f"new-{int(time.time())}"
+
+    parsed_hpo = _parse_hpo_terms(hpo_terms)
+    parsed_variants = _parse_variants(variants)
+
+    vcf_path: str | None = None
+    if vcf is not None and vcf.filename:
+        fname = vcf.filename
+        if not fname.lower().endswith((".vcf", ".vcf.gz")):
+            raise HTTPException(status_code=400,
+                                detail="VCF file must have a .vcf or .vcf.gz extension.")
+        safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", Path(fname).name)
+        dest = UPLOADS_DIR / f"{cid}_{int(time.time())}_{safe_name}"
+        size = 0
+        try:
+            with dest.open("wb") as out:
+                while True:
+                    chunk = await vcf.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    size += len(chunk)
+                    if size > MAX_VCF_BYTES:
+                        out.close()
+                        dest.unlink(missing_ok=True)
+                        raise HTTPException(
+                            status_code=413,
+                            detail=f"VCF too large (> {MAX_VCF_BYTES // (1024*1024)} MB).")
+                    out.write(chunk)
+        except HTTPException:
+            raise
+        except Exception as e:  # noqa: BLE001
+            dest.unlink(missing_ok=True)
+            raise HTTPException(status_code=400, detail=f"could not save VCF: {e}")
+        if size == 0:
+            dest.unlink(missing_ok=True)
+            raise HTTPException(status_code=400, detail="Uploaded VCF file is empty.")
+        vcf_path = str(dest)
+
+    try:
+        case = CaseInput(
+            case_id=cid,
+            variants=parsed_variants,
+            clinical_summary=(clinical_summary or "").strip(),
+            hpo_terms=parsed_hpo,
+            vcf_path=vcf_path,
+        )
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"invalid case input: {e}")
+
+    try:
+        result = Coordinator().run(case)
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"pipeline error: {type(e).__name__}: {e}")
+    return JSONResponse(result)
 
 
 @app.post("/run")
