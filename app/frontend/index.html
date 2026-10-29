@@ -66,7 +66,7 @@
     <h1>🧭 Navigator Genome Pilot</h1>
     <span class="pill" id="provider">provider: …</span>
     <span class="pill">8-agent evidence pipeline</span>
-    <a href="/lab" class="pill" style="text-decoration:none;color:var(--accent);border-color:var(--accent);font-weight:600;">🤖 Enter the Lab &rarr;</a>
+    <a href="/lab" id="labLink" class="pill" style="text-decoration:none;color:var(--accent);border-color:var(--accent);font-weight:600;">🤖 Enter the Lab &rarr;</a>
     <div class="notice">⚠ Research use only — NOT a diagnostic system and NOT medical advice. Every finding is a hypothesis with explicit uncertainty labels.</div>
   </header>
 
@@ -167,8 +167,17 @@
       document.getElementById("provider").textContent = "provider: " + h.provider;
       const d = await (await fetch("/cases")).json();
       const sel = document.getElementById("caseSelect");
-      sel.innerHTML = d.cases.map(c=>`<option value="${c.file}">${c.case_id}</option>`).join("");
+      sel.innerHTML = d.cases.map(c=>`<option value="${c.file}" data-caseid="${c.case_id}">${c.case_id}</option>`).join("");
+      // Keep "Enter the Lab" pointed at whichever case is selected, so the lab narrates
+      // THAT case. A run updates it again to the exact case_id that was just executed.
+      sel.addEventListener("change", ()=>setLabCase(sel.options[sel.selectedIndex]?.dataset.caseid));
+      setLabCase(sel.options[sel.selectedIndex]?.dataset.caseid);
       renderAgents({});
+    }
+
+    function setLabCase(caseId){
+      const link = document.getElementById("labLink");
+      link.href = caseId ? ("/lab?case=" + encodeURIComponent(caseId)) : "/lab";
     }
 
     async function runCase(){
@@ -183,6 +192,7 @@
         if(!res.ok) throw new Error("HTTP "+res.status);
         const data = await res.json();
         renderResult(data);
+        setLabCase(data.case_id || (data.dossier && data.dossier.case_id));
         status.textContent = `Done in ${data.total_elapsed_s}s (provider: ${data.provider}).`;
       } catch(e){
         status.textContent = "Error: "+e.message;
@@ -267,6 +277,7 @@
         }
         const data = await res.json();
         renderResult(data);
+        setLabCase(data.case_id || (data.dossier && data.dossier.case_id));
         const nfind = (data.dossier && data.dossier.findings ? data.dossier.findings.length : 0);
         status.textContent = `Done in ${data.total_elapsed_s}s — ${nfind} ranked finding(s) (provider: ${data.provider}).`;
         status.style.color = "var(--green)";

@@ -473,11 +473,15 @@
 
     async function load(){
       try {
-        const r = await fetch('/lab-data');
+        // Follow the case the user actually ran: read ?case= from the URL and ask
+        // the backend for THAT case's most recent run. Falls back server-side if absent.
+        const caseId = new URLSearchParams(location.search).get('case');
+        const url = caseId ? ('/lab-data?case=' + encodeURIComponent(caseId)) : '/lab-data';
+        const r = await fetch(url);
         if (!r.ok) throw new Error('HTTP '+r.status);
         renderLab(await r.json());
       } catch(e){
-        document.getElementById('loadErr').textContent = 'Could not load run data: '+e.message+' — run the CF case first.';
+        document.getElementById('loadErr').textContent = 'Could not load run data: '+e.message+' — run the case first.';
       }
     }
     document.addEventListener('click', e=>{ if(!e.target.closest('.pod') && !e.target.closest('.bubble')) hideBubble(); });
