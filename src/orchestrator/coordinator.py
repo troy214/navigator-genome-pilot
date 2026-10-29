@@ -38,6 +38,30 @@ class Coordinator:
         t_start = time.time()
         results: list[AgentResult] = []
         ctx: dict = {}
+        gate_info: dict | None = None
+
+        # --- Data-layer gate (opt-in via DATA_LAYER_GATE_ENABLED) -------------------
+        # Only engage when a real VCF file is present, so structured benchmark cases
+        # are byte-identical whether the gate is on or off. The gate deterministically
+        # normalizes, QC-filters, annotates and ranks variants BEFORE any agent sees
+        # them, owning the rarity reduction so the swarm never gets flooded. It fails
+        # safe: maybe_gate() returns the original case unchanged on any error.
+        if settings.DATA_LAYER_GATE_ENABLED and getattr(case, "vcf_path", None):
+            try:
+                from src.pipeline import data_layer
+                from src.pipeline import rank as rank_mod
+                # Scan the whole file (no positional truncation) so rarity filtering
+                # sees every variant; max_candidates bounds what the agents receive.
+                cfg = data_layer.DataLayerConfig(
+                    max_variants=5_000_000,
+                    rank_config=rank_mod.RankConfig(drop_common=True, max_candidates=200))
+                gated = data_layer.maybe_gate(case, cfg)
+                if gated is not case:
+                    gate_info = {"enabled": True,
+                                 "candidates_after_gate": len(gated.variants)}
+                    case = gated
+            except Exception as e:  # never let the gate break a run
+                gate_info = {"enabled": True, "error": str(e), "fell_back": True}
 
         def step(agent, key, local_ctx=None):
             if progress:
@@ -90,6 +114,7 @@ class Coordinator:
             "dossier": dossier_result.payload.get("dossier", {}),
             "pdf_path": dossier_result.payload.get("pdf_path"),
             "s3_destination": dossier_result.payload.get("s3_destination"),
+            "data_layer": gate_info,
         }
 
         if persist:
