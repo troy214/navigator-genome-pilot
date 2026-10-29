@@ -125,8 +125,104 @@ parses and runs through the Intake agent via the normalized path.
   left-alignment via `bcftools norm -f`.
 - The pysam fallback splits multiallelics at the text level (preserving values exactly) but
   does not left-align even with a FASTA — use `bcftools` for left-alignment.
-- Stages 02–06 (QC filters, Parquet columnar store, tabix index, annotation join, the
-  deterministic rank gate) are **not** built yet; this delivers Stage 01 only.
+- Supersedes the earlier note: Stages 02–06 are now built (see below).
+
+---
+
+## Stages 02–06 — implementation notes (built)
+
+**Status:** Stages 02 (QC & hard filters), 03 (columnar store), 04 (index), 05 (annotate),
+and 06 (filter & rank — the gate) are implemented and verified offline, plus an
+orchestration entry point that chains 01→06. All stages are deterministic, non-LLM, and
+**non-breaking** — `parse_vcf`/`iter_variants` and all 8 agents keep working unchanged, and
+the full gated path is opt-in (default OFF).
+
+**Tool / library versions (this environment):**
+- `pyarrow` **26.0.0** — installed via `pip` into `/opt/abacus-python` (was missing).
+- `pysam` **0.24.1** (`/opt/abacus-python`) — bgzip + tabix via its bundled htslib (no
+  standalone `bgzip`/`tabix` binaries are required/present on PATH).
+- `bcftools` **1.19** (system) — used only by Stage 01 upstream.
+
+**Modules added (all under `src/pipeline/`, each with research-use-only docstrings):**
+- `qc.py` — **Stage 02.** Streaming, line-by-line hard filter over Stage 01's normalized
+  lines. Enforces `FILTER==PASS` (`.`/empty treated as "no filtering applied" = acceptable),
+  and configurable `DP`/`GQ`/allele-balance thresholds (`QCThresholds`; defaults permissive
+  = PASS-only so the demo is unchanged, `QCThresholds.recommended()` = DP≥10/GQ≥20/AB 0.2–0.8).
+  Optional BED region mask (`BedMask`, 0-based half-open vs VCF 1-based, chr-prefix tolerant).
+  **Missing-field policy (deliberate):** a quality field that is *absent* (e.g. demo VCFs with
+  no FORMAT/sample columns) **passes** its check — we never drop a variant for a metric we
+  cannot see; only a present-and-failing field drops it. Provenance via `QCStats`.
+- `store.py` — **Stage 03.** Writes QC'd variants ONCE to Parquet via pyarrow, **partitioned
+  by chromosome** (`<store>/<case_id>/chrom=<chrom>/…`). Columns (nulls where unknown):
+  `chrom,pos,ref,alt,gene,consequence,gnomad_af,clinvar,cadd,gt,dp,gq` plus extras
+  `rsid,hgvs,impact,filter`. Reader (`read_variants` / `read_variants_as_objects`) supports
+  **column projection and predicate push-down** (by `chrom` partition and `max_gnomad_af`).
+  Location configurable (`base_dir=` / `DATA_LAYER_STORE_DIR`; default `data/variant_store/`).
+  Degrades: raises `StoreUnavailable` if pyarrow is absent and the orchestrator skips it.
+- `index.py` — **Stage 04.** (1) `bgzip_and_tabix()` builds a bgzipped + tabix-indexed
+  normalized VCF (via pysam's htslib) and `region_query(chrom,start,end)` does O(log n)
+  region lookups (1-based inclusive, chr-prefix tolerant). (2) In-memory + JSON-persisted
+  `gene → [row indices]` and `rsID → row index` maps for O(1) agent lookups. Tabix degrades
+  (`IndexUnavailable`) if pysam is absent; the pure-Python maps always work.
+- `annotate.py` — **Stage 05.** Deterministic join enriching each variant's `raw` with
+  population AF, clinical significance, in-silico score, and phenotype-panel membership,
+  using ONLY the existing cache-backed clients (no bulk downloads). Sources are injectable
+  (`AnnotationSources`) so tests run fully offline; every call is wrapped and **degrades to a
+  null column + `sources_unavailable` note, never raising**.
+- `rank.py` — **Stage 06, the GATE.** Deterministic scoring/ranking by **rarity** (gnomAD AF
+  vs `max_af`, default 0.01; missing AF scored neutrally, never penalized), **consequence
+  severity** (HIGH/LoF > MODERATE/missense > LOW/synonymous, from impact+consequence),
+  **phenotype match** (gene in the case panel), **clinical significance** (ClinVar
+  pathogenic↑ / benign↓), and **inheritance model** (compound-het = ≥2 hets in one gene,
+  homozygous-recessive; de-novo activates only with trio/parental genotypes — absent in demo
+  inputs, so it degrades to no-op). Returns a new best-first list; every candidate carries
+  `raw["rank"] = {score, factors, filters_passed}` for full provenance. `RankConfig` exposes
+  all weights/thresholds and an optional `drop_common` / `max_candidates`.
+- `data_layer.py` — **orchestration.** `run(case, config)` chains 01→06 and is independently
+  callable (works with a `vcf_path` or with structured `variants`). `DataLayerConfig` carries
+  all stage settings; `DataLayerResult` returns the ranked set + QC/annotation stats + artifact
+  paths (store, tabix gz, lookup maps). Optional stages degrade and never hard-crash a run.
+
+**Wired vs stubbed (honest):**
+- **WIRED** — gnomAD AF and ClinVar significance via `src.clients.myvariant` (aggregates
+  ClinVar/gnomAD/dbNSFP) with `src.clients.clinvar` (NCBI E-utilities) as fallback; both are
+  gene-scoped, cache-backed, free-API lookups — never bulk downloads.
+- **RESERVED (effectively null)** — CADD / in-silico score: the Parquet column exists and is
+  filled only if a source hands one over; the minimal MyVariant client does not currently
+  surface a per-variant CADD and we do **not** fetch CADD in bulk, so in practice it stays null.
+- **STUBBED** — the phenotype gene panel: no offline HPO→gene panel is bundled, so
+  `phenotype_match` is computed against a caller-supplied set of gene symbols
+  (`phenotype_panel=`). Passing `None` skips it.
+- Offline behavior: with the network stubbed (as in tests), annotation leaves AF/ClinVar null
+  and records the sources as unavailable; QC/store/index/rank are fully local and unaffected.
+
+**How to enable the full gated path (opt-in; default behavior & demo unchanged):**
+- Set env `DATA_LAYER_GATE_ENABLED=1` (also `true`/`yes`/`on`). Optionally
+  `DATA_LAYER_STORE_DIR=/path` to relocate the Parquet store.
+- The single integration hook is `src.pipeline.data_layer.maybe_gate(case)`: when the flag is
+  OFF it returns the case **untouched**; when ON it runs the layer and returns a NEW
+  `CaseInput` whose `variants` are the ranked candidate set and whose `vcf_path` is cleared —
+  so the Intake agent (and the rest of the swarm) consume pre-filtered, ranked variants
+  through the **existing interface with zero agent code changes**. No agent currently calls
+  `maybe_gate`, so default runs are byte-for-byte unchanged; wiring it in is a one-line change
+  at the case-entry point when desired.
+
+**Verification:** `tests/test_data_layer.py` 18/18 pass (QC threshold + missing-field
+pass-through + BED mask; Parquet round-trip + chrom partitioning + predicate push-down; tabix
+region query + gene/rsID maps; annotation join with stubbed clients + offline degradation;
+rank-gate ordering — a rare high-consequence phenotype-matching variant outranks a common
+benign one — + compound-het + provenance; orchestration chain + opt-in gate). Full suite
+**40/40** pass (22 prior + 18 new, no regression). Live `navigator` service restarted and
+healthy (HTTP 200); the demo VCF still parses and runs through Intake unchanged on the default
+(non-gated) path. No `/run-new` LLM pipeline was triggered (no Meta credits spent).
+
+**Known limitations (honest scope):**
+- Demo/snippet VCFs carry no FORMAT/sample columns, so DP/GQ/AB thresholds and inheritance
+  (het/hom/comp-het) are effectively inert on them by design (missing-field pass-through);
+  they engage on real, fully-populated VCFs.
+- De-novo detection needs trio/parental genotypes, which the current inputs lack.
+- CADD/in-silico enrichment is reserved, not wired (see wired-vs-stubbed above).
+- Phenotype matching depends on a caller-supplied gene panel (no bundled HPO→gene source).
 
 ---
 

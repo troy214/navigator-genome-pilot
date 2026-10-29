@@ -8,10 +8,13 @@ PyYAML>=6.0
 openai>=1.30
 
 # Genomics / data (streaming data layer — Stage 01: Ingest & Normalize)
-pysam>=0.22            # VCF streaming + multiallelic split fallback
+pysam>=0.22            # VCF streaming + multiallelic split fallback; bgzip+tabix (Stage 04)
+pyarrow>=16            # Parquet columnar store (Stage 03), partitioned by chromosome
 # bcftools (system package, e.g. `apt-get install bcftools`) is preferred for
 # `norm -m-` split + left-align; pysam is the pure-Python fallback. If neither is
 # installed, src/pipeline/vcf.py falls back to the dependency-free line reader.
+# pyarrow is optional at runtime: the columnar store (Stage 03) degrades gracefully
+# (StoreUnavailable) if it is not installed.
 
 # Demo app backend
 fastapi>=0.110

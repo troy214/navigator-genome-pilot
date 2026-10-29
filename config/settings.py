@@ -74,6 +74,15 @@ AWS_S3_DOSSIER_PREFIX = os.getenv("AWS_S3_DOSSIER_PREFIX", "navigator/dossiers/"
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", "8000"))
 
+# --- Genomic streaming data layer (Stages 01–06) ------------------------------
+# Opt-in gate: when enabled, the deterministic data layer (ingest→normalize→QC→
+# store→index→annotate→rank) runs BEFORE the agents and hands Intake a ranked,
+# pre-filtered candidate set. Default OFF so existing behavior / demo cases are
+# unchanged. See docs/DATA_LAYER_DESIGN.md ("how to enable the full gated path").
+DATA_LAYER_GATE_ENABLED = os.getenv("DATA_LAYER_GATE_ENABLED", "").lower() in ("1", "true", "yes", "on")
+# Optional override for the columnar store location (defaults to data/variant_store).
+DATA_LAYER_STORE_DIR = os.getenv("DATA_LAYER_STORE_DIR", "")
+
 # --- Paths --------------------------------------------------------------------
 AGENTS_CONFIG = ROOT / "config" / "agents.yaml"
 DEV_MODELS_CONFIG = ROOT / "config" / "models.dev.yaml"
