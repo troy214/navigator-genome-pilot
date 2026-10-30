@@ -82,6 +82,28 @@ API_KEYS_REQUIRED = os.getenv("API_KEYS_REQUIRED", "1").lower() in ("1", "true",
 # Location of the salted-hash key store (git-ignored). Override for tests via env.
 API_KEYS_STORE = os.getenv("API_KEYS_STORE", str(ROOT / "data" / "api_keys.json"))
 
+# --- Researcher API throttling / quota controls --------------------------------
+# These global DEFAULTS apply to every API key unless the key carries a per-key
+# override (see src/utils/api_keys.py and scripts/manage_api_keys.py). They protect
+# shared processing capacity from a single facility pushing too much work at once.
+# They DO NOT affect the public web demo endpoints (/run, /lab, etc.) in any way.
+#
+# NOTE: the rate-limit and in-flight counters are PER PROCESS (per uvicorn worker).
+# With a single worker (the current deployment) that is the whole app. If scaled to
+# multiple workers/hosts, move the counters to a shared store (e.g. Redis) — see
+# src/utils/throttle.py for where the swap would go.
+
+# Per-request variant cap: reject /api/v1/analyze when the submitted variant count
+# (VCF data records, or JSON variant-list entries) exceeds this.
+API_MAX_VARIANTS_PER_REQUEST = int(os.getenv("API_MAX_VARIANTS_PER_REQUEST", "50000"))
+
+# Per-key sliding-window request rate limits (primarily for the expensive /analyze).
+API_REQUESTS_PER_MINUTE = int(os.getenv("API_REQUESTS_PER_MINUTE", "10"))
+API_REQUESTS_PER_DAY = int(os.getenv("API_REQUESTS_PER_DAY", "200"))
+
+# Max concurrent in-flight /analyze runs per key.
+API_MAX_CONCURRENT_ANALYSES = int(os.getenv("API_MAX_CONCURRENT_ANALYSES", "2"))
+
 # --- Genomic streaming data layer (Stages 01–06) ------------------------------
 # Opt-in gate: when enabled, the deterministic data layer (ingest→normalize→QC→
 # store→index→annotate→rank) runs BEFORE the agents and hands Intake a ranked,

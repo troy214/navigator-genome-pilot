@@ -23,6 +23,7 @@ from config import settings
 from src.orchestrator.coordinator import Coordinator
 from src.utils import api_keys
 from src.utils.schema import CaseInput, Variant
+from src.utils.throttle import effective_limits, throttler
 
 log = logging.getLogger("navigator.api")
 
@@ -216,6 +217,75 @@ RESEARCH_NOTICE = (
     "not a diagnosis and not medical advice."
 )
 
+# When a request is blocked purely for concurrency (no time window to wait on), suggest
+# this many seconds before retrying. It is an estimate, not an exact window.
+CONCURRENCY_RETRY_AFTER_S = 15
+
+
+def _count_vcf_records(path: str) -> int:
+    """Count data (non-header, non-blank) records in a VCF, gzip-aware.
+
+    Header lines start with '#'. Used to enforce the per-request variant cap on VCF
+    uploads before the pipeline runs. Returns 0 if the file cannot be read (the pipeline
+    will surface any real parse problem later).
+    """
+    import gzip
+
+    opener = gzip.open if str(path).lower().endswith(".gz") else open
+    count = 0
+    try:
+        with opener(path, "rt", errors="replace") as fh:
+            for line in fh:
+                s = line.strip()
+                if not s or s.startswith("#"):
+                    continue
+                count += 1
+    except OSError:
+        return 0
+    return count
+
+
+def _ratelimit_headers(decision) -> dict[str, str]:
+    """Build X-RateLimit-* headers from a throttle.RateDecision."""
+    return {
+        "X-RateLimit-Limit-Minute": str(decision.limit_minute),
+        "X-RateLimit-Remaining-Minute": str(decision.remaining_minute),
+        "X-RateLimit-Limit-Day": str(decision.limit_day),
+        "X-RateLimit-Remaining-Day": str(decision.remaining_day),
+    }
+
+
+def _enforce_rate_limit(facility: dict, limits: dict) -> dict[str, str]:
+    """Check the per-key request rate for an expensive call.
+
+    Returns the X-RateLimit-* headers to attach on success. Raises HTTPException(429)
+    with a Retry-After header and a clear JSON body when the limit is exceeded.
+    """
+    key_id = facility.get("key_id") or "unknown"
+    decision = throttler.check_rate(
+        key_id, limits["requests_per_minute"], limits["requests_per_day"])
+    if not decision.allowed:
+        headers = _ratelimit_headers(decision)
+        headers["Retry-After"] = str(decision.retry_after)
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "rate_limit_exceeded",
+                "message": (
+                    f"Rate limit exceeded for this API key: "
+                    f"{limits['requests_per_minute']} requests/minute, "
+                    f"{limits['requests_per_day']} requests/day. "
+                    f"Retry in about {decision.retry_after}s, or slow your submission "
+                    f"rate and batch work sequentially."),
+                "retry_after_seconds": decision.retry_after,
+                "limit_per_minute": limits["requests_per_minute"],
+                "limit_per_day": limits["requests_per_day"],
+                "notice": RESEARCH_NOTICE,
+            },
+            headers=headers,
+        )
+    return _ratelimit_headers(decision)
+
 
 async def require_api_key(x_api_key: str | None = Header(None, alias="X-API-Key")) -> dict:
     """FastAPI dependency: authenticate a research facility by its X-API-Key header.
@@ -241,11 +311,19 @@ api_v1 = APIRouter(prefix="/api/v1", tags=["researcher-api"])
 
 @api_v1.get("/me")
 def api_me(facility: dict = Depends(require_api_key)):
-    """Return the authenticated facility's key_id and label — never the secret."""
+    """Return the authenticated facility's identity + effective limits — never the secret.
+
+    ``limits`` is the EFFECTIVE set actually enforced for this key: per-key overrides
+    merged over the global defaults. ``limit_overrides`` shows only the fields this key
+    overrides (empty means it uses all global defaults).
+    """
+    limits = effective_limits(facility)
     return {
         "key_id": facility.get("key_id"),
         "label": facility.get("label"),
         "active": facility.get("active", True),
+        "limits": limits,
+        "limit_overrides": dict(facility.get("limits") or {}),
         "notice": RESEARCH_NOTICE,
     }
 
@@ -275,6 +353,51 @@ async def api_analyze(request: Request, facility: dict = Depends(require_api_key
 
     Returns the same result shape as POST /run, including variant_count. RESEARCH
     USE ONLY — the result is a hypothesis with uncertainty, never a diagnosis.
+
+    Throttling (per API key; see docs/RESEARCHER_API.md):
+      * per-key request rate limit  -> 429 + Retry-After
+      * max concurrent analyses     -> 429 + Retry-After
+      * per-request variant cap     -> 413
+    Limits are the key's effective limits (per-key overrides merged over global defaults).
+    """
+    limits = effective_limits(facility)
+    key_id = facility.get("key_id") or "unknown"
+
+    # 1) Per-key request-rate limit (raises 429 w/ Retry-After when exceeded).
+    rl_headers = _enforce_rate_limit(facility, limits)
+
+    # 2) Per-key max concurrent in-flight analyses. Acquire a slot now and ALWAYS
+    #    release it in the finally below, even on parse/validation/pipeline errors.
+    if not throttler.acquire(key_id, limits["max_concurrent"]):
+        headers = dict(rl_headers)
+        headers["Retry-After"] = str(CONCURRENCY_RETRY_AFTER_S)
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "concurrency_limit_exceeded",
+                "message": (
+                    f"This API key already has {limits['max_concurrent']} analysis run(s) "
+                    f"in progress (the maximum). Wait for one to finish before submitting "
+                    f"another, then retry."),
+                "retry_after_seconds": CONCURRENCY_RETRY_AFTER_S,
+                "max_concurrent": limits["max_concurrent"],
+                "notice": RESEARCH_NOTICE,
+            },
+            headers=headers,
+        )
+
+    try:
+        return await _analyze_inner(request, key_id, limits, rl_headers)
+    finally:
+        throttler.release(key_id)
+
+
+async def _analyze_inner(request: Request, key_id: str, limits: dict,
+                         rl_headers: dict[str, str]) -> JSONResponse:
+    """Parse the submission, enforce the variant cap, and run the pipeline.
+
+    Split out of api_analyze so the concurrency slot acquired by the caller is always
+    released via its try/finally, regardless of what happens in here.
     """
     content_type = (request.headers.get("content-type") or "").lower()
 
@@ -342,9 +465,37 @@ async def api_analyze(request: Request, facility: dict = Depends(require_api_key
             status_code=400,
             detail="Provide at least a clinical_summary, variants, or a VCF file.")
 
+    # 3) Per-request variant cap. Count VCF DATA records (non-header) for uploads, plus
+    #    any JSON/text variant-list entries. Reject BEFORE running the pipeline.
+    cap = limits["max_variants_per_request"]
+    submitted = len(parsed_variants)
+    if vcf_path:
+        submitted += _count_vcf_records(vcf_path)
+    if submitted > cap:
+        # Drop the just-saved upload so a rejected call leaves nothing behind.
+        if vcf_path:
+            try:
+                Path(vcf_path).unlink(missing_ok=True)
+            except OSError:
+                pass
+        raise HTTPException(
+            status_code=413,
+            detail={
+                "error": "variant_cap_exceeded",
+                "message": (
+                    f"Submission has {submitted} variants, which exceeds the per-request "
+                    f"cap of {cap} for this API key. Split the work into smaller batches "
+                    f"of at most {cap} variants and submit them sequentially."),
+                "submitted_variants": submitted,
+                "max_variants_per_request": cap,
+                "notice": RESEARCH_NOTICE,
+            },
+            headers=rl_headers,
+        )
+
     cid = _sanitize_case_id(cid_raw)
     result = _run_case_payload(cid, clinical_summary, parsed_hpo, parsed_variants, vcf_path)
-    return JSONResponse(result)
+    return JSONResponse(result, headers=rl_headers)
 
 
 app.include_router(api_v1)

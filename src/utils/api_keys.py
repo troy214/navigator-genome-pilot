@@ -89,15 +89,47 @@ def _now_iso() -> str:
 # --------------------------------------------------------------------------- #
 # Public API
 # --------------------------------------------------------------------------- #
-def generate_key(label: str, notes: str = "") -> tuple[str, dict[str, Any]]:
+# Optional per-key throttling overrides a key record may carry. Each is an int; when
+# absent the global default in config/settings.py applies. See src/utils/throttle.py.
+LIMIT_FIELDS = (
+    "max_variants_per_request",
+    "requests_per_minute",
+    "requests_per_day",
+    "max_concurrent",
+)
+
+
+def _clean_limits(limits: dict[str, Any] | None) -> dict[str, int]:
+    """Validate + keep only the recognized, positive-int limit overrides."""
+    out: dict[str, int] = {}
+    if not limits:
+        return out
+    for name in LIMIT_FIELDS:
+        val = limits.get(name)
+        if val is None:
+            continue
+        if isinstance(val, bool) or not isinstance(val, int):
+            raise ValueError(f"limit override {name!r} must be a positive integer")
+        if val <= 0:
+            raise ValueError(f"limit override {name!r} must be a positive integer")
+        out[name] = val
+    return out
+
+
+def generate_key(label: str, notes: str = "",
+                 limits: dict[str, Any] | None = None) -> tuple[str, dict[str, Any]]:
     """Create + persist a new key record; return (full_plaintext_key, record).
 
     The returned plaintext key is the ONLY time the secret is available; the store
-    keeps only its salted hash. ``label`` is the research facility name.
+    keeps only its salted hash. ``label`` is the research facility name. ``limits`` is
+    an optional dict of per-key throttling overrides (see ``LIMIT_FIELDS``); any field
+    omitted falls back to the global default in config/settings.py.
     """
     label = (label or "").strip()
     if not label:
         raise ValueError("label (research facility name) is required")
+
+    clean_limits = _clean_limits(limits)
 
     key_id = KEY_PREFIX + secrets.token_hex(_KEY_ID_BYTES)
     salt = secrets.token_hex(_SALT_BYTES)
@@ -112,6 +144,7 @@ def generate_key(label: str, notes: str = "") -> tuple[str, dict[str, Any]]:
         "created_at": _now_iso(),
         "active": True,
         "notes": (notes or "").strip(),
+        "limits": clean_limits,
     }
     records = _load()
     records.append(record)
@@ -184,5 +217,7 @@ def public_record(rec: dict[str, Any]) -> dict[str, Any]:
         "created_at": rec.get("created_at"),
         "active": rec.get("active", False),
         "notes": rec.get("notes", ""),
+        # Per-key throttling overrides (empty dict means "use global defaults").
+        "limits": dict(rec.get("limits") or {}),
         **({"revoked_at": rec["revoked_at"]} if rec.get("revoked_at") else {}),
     }
