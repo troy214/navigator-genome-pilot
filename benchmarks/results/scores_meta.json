@@ -1,0 +1,312 @@
+{
+  "generated": "2026-10-30T17:26:59.473343+00:00",
+  "provider": "meta",
+  "model_id": "muse-spark-1.3",
+  "base_url": "https://api.meta.ai/v1",
+  "valid_meta_run": true,
+  "proof_gate": {
+    "rule": "real Meta completions succeeded > 0",
+    "passed": true,
+    "succeeded": 66,
+    "expected_min_if_meta": 15
+  },
+  "n_cases": 15,
+  "n_scored": 15,
+  "top1_hit_rate": 1.0,
+  "top5_hit_rate": 1.0,
+  "meta_completions": {
+    "attempted": 66,
+    "succeeded": 66,
+    "failed": 0,
+    "error_classes": {}
+  },
+  "tokens": {
+    "usage_reported_by_api": true,
+    "prompt_tokens": 31513,
+    "completion_tokens": 123655,
+    "total_tokens": 155168
+  },
+  "latency": {
+    "total_model_latency_s": 680.805,
+    "total_wall_clock_s": 693.411,
+    "mean_model_latency_per_call_s": 10.315
+  },
+  "per_case": {
+    "CF-CFTR-F508del": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "CFTR",
+      "ranked_genes": [
+        "CFTR"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 9423
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "DMD-DMD-R1577X": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "DMD",
+      "ranked_genes": [
+        "DMD"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 10118
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "FH-LDLR-G592E": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "LDLR",
+      "ranked_genes": [
+        "LDLR"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 10487
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "HBOC-BRCA1-185delAG": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "BRCA1",
+      "ranked_genes": [
+        "BRCA1"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 9504
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "HD-HTT-CAG-EXP": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "HTT",
+      "ranked_genes": [
+        "HTT"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 10137
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "HEMA-F8-R2016W": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "F8",
+      "ranked_genes": [
+        "F8"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 9718
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "MFS-FBN1-C1170Y": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "FBN1",
+      "ranked_genes": [
+        "FBN1"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 9801
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "PKU-PAH": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "PAH",
+      "ranked_genes": [
+        "PAH",
+        "HEXA",
+        "MECP2"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 6,
+        "succeeded": 6,
+        "failed": 0,
+        "total_tokens": 11252
+      },
+      "agents_real_meta": 6,
+      "agents_degraded": 0
+    },
+    "POMPE-GAA-IVS1": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "GAA",
+      "ranked_genes": [
+        "GAA",
+        "DMD"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 5,
+        "succeeded": 5,
+        "failed": 0,
+        "total_tokens": 11133
+      },
+      "agents_real_meta": 5,
+      "agents_degraded": 0
+    },
+    "RETT-MECP2-T158M": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "MECP2",
+      "ranked_genes": [
+        "MECP2",
+        "HEXA"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 5,
+        "succeeded": 5,
+        "failed": 0,
+        "total_tokens": 11755
+      },
+      "agents_real_meta": 5,
+      "agents_degraded": 0
+    },
+    "SCD-HBB-E6V": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "HBB",
+      "ranked_genes": [
+        "HBB"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 9429
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "SMA-SMN1-EX7DEL": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "SMN1",
+      "ranked_genes": [
+        "SMN1",
+        "DMD"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 5,
+        "succeeded": 5,
+        "failed": 0,
+        "total_tokens": 10635
+      },
+      "agents_real_meta": 5,
+      "agents_degraded": 0
+    },
+    "TSD-HEXA-1278insTATC": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "HEXA",
+      "ranked_genes": [
+        "HEXA",
+        "MECP2"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 5,
+        "succeeded": 5,
+        "failed": 0,
+        "total_tokens": 11197
+      },
+      "agents_real_meta": 5,
+      "agents_degraded": 0
+    },
+    "VHL-VHL-R167W": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "VHL",
+      "ranked_genes": [
+        "VHL"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 10235
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    },
+    "WILSON-ATP7B-H1069Q": {
+      "top1": true,
+      "top5": true,
+      "expected_gene": "ATP7B",
+      "ranked_genes": [
+        "ATP7B"
+      ],
+      "provider": "meta",
+      "sources_unavailable": [],
+      "meta_calls": {
+        "attempted": 4,
+        "succeeded": 4,
+        "failed": 0,
+        "total_tokens": 10344
+      },
+      "agents_real_meta": 4,
+      "agents_degraded": 0
+    }
+  }
+}
