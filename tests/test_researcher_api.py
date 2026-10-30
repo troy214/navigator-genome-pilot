@@ -27,6 +27,10 @@ def _tmp_store(tmp_path, monkeypatch):
     store = tmp_path / "api_keys.json"
     monkeypatch.setattr(settings, "API_KEYS_STORE", str(store))
     monkeypatch.setattr(settings, "API_KEYS_REQUIRED", True)
+    # Keep the facility data-layer gate OFF here so the existing VCF tests exercise the
+    # raw-record path deterministically and offline (no data-layer / network annotation).
+    # The gate-ON reduction behavior is covered by tests/test_data_layer_gate_cap.py.
+    monkeypatch.setattr(settings, "FACILITY_DATA_LAYER_GATE", False)
     return store
 
 

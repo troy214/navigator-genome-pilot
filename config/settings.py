@@ -113,6 +113,15 @@ DATA_LAYER_GATE_ENABLED = os.getenv("DATA_LAYER_GATE_ENABLED", "").lower() in ("
 # Optional override for the columnar store location (defaults to data/variant_store).
 DATA_LAYER_STORE_DIR = os.getenv("DATA_LAYER_STORE_DIR", "")
 
+# Facility-scoped data-layer gate for the authenticated /api/v1/analyze path ONLY.
+# This is deliberately INDEPENDENT of DATA_LAYER_GATE_ENABLED (the coordinator's global
+# gate) so we can reduce raw VCFs to a ranked candidate set BEFORE the per-request
+# variant cap on the facility API without touching the public demo paths
+# (/run, /run-new, /lab), which must stay behaviorally unchanged. Default ON: the
+# facility API is the intended consumer of the deterministic data layer. See
+# app/backend/main.py:_facility_data_layer_reduce and docs/RESEARCHER_API.md §5.
+FACILITY_DATA_LAYER_GATE = os.getenv("FACILITY_DATA_LAYER_GATE", "1").lower() in ("1", "true", "yes", "on")
+
 # --- Paths --------------------------------------------------------------------
 AGENTS_CONFIG = ROOT / "config" / "agents.yaml"
 DEV_MODELS_CONFIG = ROOT / "config" / "models.dev.yaml"

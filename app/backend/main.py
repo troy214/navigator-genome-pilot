@@ -245,6 +245,50 @@ def _count_vcf_records(path: str) -> int:
     return count
 
 
+def _facility_data_layer_reduce(cid: str, clinical_summary: str, parsed_hpo: list[str],
+                                parsed_variants: list[Variant],
+                                vcf_path: str) -> list[Variant] | None:
+    """Run the deterministic data layer on an uploaded VCF for the FACILITY API path and
+    return the ranked candidate variants (post-reduction), or None to fall back.
+
+    Scoped to the authenticated /api/v1/analyze path and gated by the dedicated
+    ``settings.FACILITY_DATA_LAYER_GATE`` flag — deliberately independent of the
+    coordinator's global ``DATA_LAYER_GATE_ENABLED`` so enabling reduction here cannot
+    change the public demo paths (/run, /run-new, /lab). We call ``data_layer.run()``
+    directly (NOT ``maybe_gate()``, which keys off the global flag) using the SAME config
+    the coordinator's gate uses, so the candidate set is identical to what the agents
+    would otherwise receive.
+
+    Fails safe exactly like the coordinator: on ANY error — or if the reduction yields no
+    candidates — returns None so the caller keeps the current behavior (cap measured on
+    raw VCF record count, raw VCF passed to the pipeline).
+    """
+    try:
+        from src.pipeline import data_layer
+        from src.pipeline import rank as rank_mod
+
+        case = CaseInput(
+            case_id=cid,
+            variants=parsed_variants,
+            clinical_summary=(clinical_summary or "").strip(),
+            hpo_terms=parsed_hpo,
+            vcf_path=vcf_path,
+        )
+        # Scan the whole file (no positional truncation); max_candidates bounds the set
+        # the agents receive. Mirrors coordinator.run()'s DataLayerConfig exactly.
+        cfg = data_layer.DataLayerConfig(
+            max_variants=5_000_000,
+            rank_config=rank_mod.RankConfig(drop_common=True, max_candidates=200))
+        res = data_layer.run(case, cfg)
+        if not res.variants:
+            return None
+        return list(res.variants)
+    except Exception as e:  # noqa: BLE001 - never let the gate break a request
+        logging.getLogger("navigator.api").warning(
+            "facility data-layer reduction failed (%s); falling back to raw-record cap", e)
+        return None
+
+
 def _ratelimit_headers(decision) -> dict[str, str]:
     """Build X-RateLimit-* headers from a throttle.RateDecision."""
     return {
@@ -465,17 +509,43 @@ async def _analyze_inner(request: Request, key_id: str, limits: dict,
             status_code=400,
             detail="Provide at least a clinical_summary, variants, or a VCF file.")
 
-    # 3) Per-request variant cap. Count VCF DATA records (non-header) for uploads, plus
-    #    any JSON/text variant-list entries. Reject BEFORE running the pipeline.
+    cid = _sanitize_case_id(cid_raw)
+
+    # 3) Data-layer gate FIRST (facility path only), THEN the per-request variant cap.
+    #
+    #    The deterministic data layer reduces a raw VCF (potentially tens of thousands of
+    #    records) down to a small RANKED candidate set (typically tens-to-low-hundreds) —
+    #    and that reduced set is what the 8 agents actually consume. So on the authenticated
+    #    facility path we run the reduction BEFORE measuring the cap, and enforce the cap on
+    #    the REDUCED candidate count (plus any JSON/text variants, which the data layer
+    #    merges in) rather than on raw VCF records. This is scoped via the dedicated
+    #    settings.FACILITY_DATA_LAYER_GATE flag (independent of the coordinator's global
+    #    DATA_LAYER_GATE_ENABLED) so the public demo paths stay byte-identical.
+    #
+    #    When the gate reduces the file we clear vcf_path and hand the reduced variants to
+    #    the pipeline, so the coordinator does NOT run the gate a second time (no double
+    #    work). If the gate is OFF, unavailable, errors, or yields no candidates, we keep
+    #    the EXACTLY current behavior: cap measured on raw record count, raw VCF passed on.
     cap = limits["max_variants_per_request"]
+    saved_upload_path = vcf_path  # remember the on-disk upload even after the gate clears it
+
+    if vcf_path and settings.FACILITY_DATA_LAYER_GATE:
+        reduced = _facility_data_layer_reduce(
+            cid, clinical_summary, parsed_hpo, parsed_variants, vcf_path)
+        if reduced is not None:
+            # Reduction succeeded (and merged in any JSON/text variants): agents consume
+            # `reduced`. Clear vcf_path so the pipeline/coordinator does not re-parse/re-gate.
+            parsed_variants = reduced
+            vcf_path = None
+
     submitted = len(parsed_variants)
-    if vcf_path:
+    if vcf_path:  # only when the gate did NOT reduce (off/unavailable/failed/empty)
         submitted += _count_vcf_records(vcf_path)
     if submitted > cap:
         # Drop the just-saved upload so a rejected call leaves nothing behind.
-        if vcf_path:
+        if saved_upload_path:
             try:
-                Path(vcf_path).unlink(missing_ok=True)
+                Path(saved_upload_path).unlink(missing_ok=True)
             except OSError:
                 pass
         raise HTTPException(
@@ -493,7 +563,6 @@ async def _analyze_inner(request: Request, key_id: str, limits: dict,
             headers=rl_headers,
         )
 
-    cid = _sanitize_case_id(cid_raw)
     result = _run_case_payload(cid, clinical_summary, parsed_hpo, parsed_variants, vcf_path)
     return JSONResponse(result, headers=rl_headers)
 

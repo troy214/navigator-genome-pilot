@@ -242,8 +242,8 @@ values via `GET /api/v1/me`).
 
 | Limit | Default | Applies to | On exceed |
 |---|---|---|---|
-| **VCF upload size** | 25 MB | `/analyze` uploads | **413** |
-| **Variants per request** | 50,000 | `/analyze` | **413** |
+| **VCF upload size** | 25 MB | `/analyze` uploads (raw-file guardrail) | **413** |
+| **Variants per request** | 50,000 | `/analyze` — counted on the **post-data-layer candidate set** for gated VCF uploads (§5.1) | **413** |
 | **Requests per minute** | 10 | `/analyze` (writes) | **429** + `Retry-After` |
 | **Requests per day** | 200 | `/analyze` (writes) | **429** + `Retry-After` |
 | **Concurrent analyses** | 2 | `/analyze` | **429** + `Retry-After` |
@@ -255,12 +255,35 @@ with your key.
 ### 5.1 Per-request variant cap → `413`
 
 `/analyze` rejects a submission whose variant count exceeds your `max_variants_per_request`
-(default **50,000**). The count is:
+(default **50,000**).
 
-- **VCF uploads:** the number of **data (non-header) records** (lines not starting with `#`).
+**On the gated facility path, the cap applies to the POST-data-layer candidate set, not to
+raw VCF records.** When a VCF is uploaded, the deterministic data layer runs **first**
+(ingest → normalize → QC → annotate → rank) and reduces the raw file to a small **ranked
+candidate set** — typically **tens to low hundreds** of variants — which is exactly what the
+8 agents consume. The per-request cap is then measured against that reduced candidate count
+(plus any JSON/text variants you also supply, which the data layer merges in). A large VCF
+whose raw record count would exceed the cap is therefore **not** rejected as long as the
+reduced candidate set is within the cap. (This reduction is scoped to the authenticated
+`/api/v1/analyze` path via the `FACILITY_DATA_LAYER_GATE` setting; the public demo paths are
+unaffected.) If the data layer is unavailable or a reduction fails/yields no candidates, the
+path fails safe to counting **raw data (non-header) records** (lines not starting with `#`).
+
+So the count is:
+
+- **Gated VCF uploads (default):** the number of **ranked candidate variants after the data
+  layer reduces the file** (plus any JSON/text entries supplied).
+- **Fallback (gate off / unavailable / reduction failed):** the number of **raw data
+  (non-header) VCF records**.
 - **JSON / text variant lists:** the number of entries.
 
-The 25 MB upload cap still applies independently (also returns **413**). Response body:
+The **25 MB upload size limit (`MAX_VCF_BYTES`) remains the raw-file ingest guardrail** and
+applies independently (also returns **413**) — it is a transport cap on the uploaded bytes,
+not a cap on post-reduction candidates. Note that a **true whole-genome file (multi-GB,
+millions of variants) exceeds the 25 MB upload limit** and cannot be sent by direct multipart
+upload; such files are handled by **pre-reduction at the facility** before upload, or by a
+future server-side / object-store transport path — not by raising this upload cap. Response
+body for an exceeded variant cap:
 
 ```json
 {

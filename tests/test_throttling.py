@@ -36,6 +36,10 @@ def _tmp_store_and_reset(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "API_REQUESTS_PER_MINUTE", 3)
     monkeypatch.setattr(settings, "API_REQUESTS_PER_DAY", 1000)
     monkeypatch.setattr(settings, "API_MAX_CONCURRENT_ANALYSES", 2)
+    # Facility data-layer gate OFF by default here: the cap tests in this file assert on
+    # RAW record / entry counts (the gate-OFF behavior). The gate-ON reduction path is
+    # covered separately in tests/test_data_layer_gate_cap.py.
+    monkeypatch.setattr(settings, "FACILITY_DATA_LAYER_GATE", False)
     throttler.reset()
     yield store
     throttler.reset()
