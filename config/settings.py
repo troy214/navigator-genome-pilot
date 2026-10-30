@@ -74,6 +74,14 @@ AWS_S3_DOSSIER_PREFIX = os.getenv("AWS_S3_DOSSIER_PREFIX", "navigator/dossiers/"
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", "8000"))
 
+# --- Researcher API (programmatic access for research facilities) --------------
+# When on (default), the versioned /api/v1/* endpoints require a valid X-API-Key.
+# The public web demo endpoints are NEVER gated by this. Toggle OFF only for local
+# testing with: API_KEYS_REQUIRED=0
+API_KEYS_REQUIRED = os.getenv("API_KEYS_REQUIRED", "1").lower() in ("1", "true", "yes", "on")
+# Location of the salted-hash key store (git-ignored). Override for tests via env.
+API_KEYS_STORE = os.getenv("API_KEYS_STORE", str(ROOT / "data" / "api_keys.json"))
+
 # --- Genomic streaming data layer (Stages 01–06) ------------------------------
 # Opt-in gate: when enabled, the deterministic data layer (ingest→normalize→QC→
 # store→index→annotate→rank) runs BEFORE the agents and hands Intake a ranked,

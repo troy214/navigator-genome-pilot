@@ -9,17 +9,22 @@ Endpoints:
 """
 from __future__ import annotations
 import json
+import logging
 import re
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import (APIRouter, Depends, FastAPI, File, Form, Header, HTTPException,
+                     Request, UploadFile)
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import settings
 from src.orchestrator.coordinator import Coordinator
+from src.utils import api_keys
 from src.utils.schema import CaseInput, Variant
+
+log = logging.getLogger("navigator.api")
 
 # Max size (bytes) for an uploaded VCF. Keep in sync with nginx client_max_body_size
 # in deploy/navigator-genome.conf.
@@ -195,6 +200,156 @@ def health():
             "service": "navigator-genome-pilot"}
 
 
+# --------------------------------------------------------------------------- #
+# Researcher-facing programmatic API (/api/v1) — API-key authenticated.
+#
+# RESEARCH USE ONLY. Every output is a research hypothesis with explicit
+# uncertainty, never a diagnosis and never medical advice. The key layer only
+# controls per-facility access; it makes no clinical claim.
+#
+# The public web demo endpoints above stay open and unchanged. Authentication
+# applies ONLY to this /api/v1 namespace, and can be toggled with the
+# API_KEYS_REQUIRED env flag (default ON).
+# --------------------------------------------------------------------------- #
+RESEARCH_NOTICE = (
+    "Research use only. Outputs are research hypotheses with explicit uncertainty — "
+    "not a diagnosis and not medical advice."
+)
+
+
+async def require_api_key(x_api_key: str | None = Header(None, alias="X-API-Key")) -> dict:
+    """FastAPI dependency: authenticate a research facility by its X-API-Key header.
+
+    Returns a public (secret-free) record of the facility's key. Raises 401 when the
+    header is missing and 403 when the key is unknown or revoked. When
+    API_KEYS_REQUIRED is off, authentication is bypassed (useful for local testing).
+    """
+    if not settings.API_KEYS_REQUIRED:
+        return {"key_id": "auth-disabled", "label": "auth-disabled",
+                "active": True, "created_at": None, "notes": ""}
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="Missing X-API-Key header.")
+    rec = api_keys.verify_key(x_api_key)
+    if rec is None:
+        raise HTTPException(status_code=403, detail="Invalid or revoked API key.")
+    log.info("api/v1 call by facility key_id=%s label=%s", rec.get("key_id"), rec.get("label"))
+    return api_keys.public_record(rec)
+
+
+api_v1 = APIRouter(prefix="/api/v1", tags=["researcher-api"])
+
+
+@api_v1.get("/me")
+def api_me(facility: dict = Depends(require_api_key)):
+    """Return the authenticated facility's key_id and label — never the secret."""
+    return {
+        "key_id": facility.get("key_id"),
+        "label": facility.get("label"),
+        "active": facility.get("active", True),
+        "notice": RESEARCH_NOTICE,
+    }
+
+
+@api_v1.get("/cases")
+def api_cases(facility: dict = Depends(require_api_key)):
+    """List the bundled benchmark cases (same payload as the public /cases)."""
+    return list_cases()
+
+
+@api_v1.get("/dossier/{case_id}")
+def api_dossier(case_id: str, facility: dict = Depends(require_api_key)):
+    """Download the rendered dossier PDF for a case_id, behind the API key."""
+    return get_dossier(case_id)
+
+
+@api_v1.post("/analyze")
+async def api_analyze(request: Request, facility: dict = Depends(require_api_key)):
+    """Run the 8-agent research pipeline on a submitted case.
+
+    Accepts EITHER:
+      * application/json  — {"case_id","clinical_summary","hpo_terms","variants"} where
+        hpo_terms is a list[str] (or newline/comma string) and variants is a list of
+        objects ({"gene","hgvs","chrom","pos","ref","alt","rsid"}) or a text block.
+      * multipart/form-data — fields case_id, clinical_summary, hpo_terms, variants and
+        an optional `vcf` file upload (.vcf / .vcf.gz, <= 25 MB).
+
+    Returns the same result shape as POST /run, including variant_count. RESEARCH
+    USE ONLY — the result is a hypothesis with uncertainty, never a diagnosis.
+    """
+    content_type = (request.headers.get("content-type") or "").lower()
+
+    cid_raw = ""
+    clinical_summary = ""
+    parsed_hpo: list[str] = []
+    parsed_variants: list[Variant] = []
+    vcf_path: str | None = None
+
+    if content_type.startswith("application/json"):
+        try:
+            body = await request.json()
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail=f"invalid JSON body: {e}")
+        if not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="JSON body must be an object.")
+
+        cid_raw = str(body.get("case_id") or "")
+        clinical_summary = str(body.get("clinical_summary") or "")
+
+        hpo = body.get("hpo_terms")
+        if isinstance(hpo, list):
+            parsed_hpo = [str(t).strip() for t in hpo if str(t).strip()]
+        elif isinstance(hpo, str):
+            parsed_hpo = _parse_hpo_terms(hpo)
+        elif hpo is not None:
+            raise HTTPException(status_code=400,
+                                detail="hpo_terms must be a list or a string.")
+
+        variants = body.get("variants")
+        if isinstance(variants, list):
+            try:
+                parsed_variants = [
+                    v if isinstance(v, Variant) else Variant(**v) for v in variants
+                ]
+            except Exception as e:  # noqa: BLE001
+                raise HTTPException(status_code=400,
+                                    detail=f"invalid variants entry: {e}")
+        elif isinstance(variants, str):
+            parsed_variants = _parse_variants(variants)
+        elif variants is not None:
+            raise HTTPException(status_code=400,
+                                detail="variants must be a list of objects or a string.")
+
+    elif content_type.startswith("multipart/form-data") or \
+            content_type.startswith("application/x-www-form-urlencoded"):
+        form = await request.form()
+        cid_raw = str(form.get("case_id") or "")
+        clinical_summary = str(form.get("clinical_summary") or "")
+        parsed_hpo = _parse_hpo_terms(str(form.get("hpo_terms") or ""))
+        parsed_variants = _parse_variants(str(form.get("variants") or ""))
+        # request.form() yields starlette UploadFile (not the fastapi subclass), so
+        # duck-type on the file interface rather than isinstance(..., UploadFile).
+        vcf = form.get("vcf")
+        if vcf is not None and getattr(vcf, "filename", None) and hasattr(vcf, "read"):
+            cid_tmp = _sanitize_case_id(cid_raw)
+            vcf_path = await _save_vcf_upload(vcf, cid_tmp)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Content-Type must be application/json or multipart/form-data.")
+
+    if not clinical_summary.strip() and not parsed_variants and not vcf_path:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide at least a clinical_summary, variants, or a VCF file.")
+
+    cid = _sanitize_case_id(cid_raw)
+    result = _run_case_payload(cid, clinical_summary, parsed_hpo, parsed_variants, vcf_path)
+    return JSONResponse(result)
+
+
+app.include_router(api_v1)
+
+
 @app.get("/cases")
 def list_cases():
     out = []
@@ -257,61 +412,60 @@ def _parse_variants(raw: str) -> list[Variant]:
     return variants
 
 
-@app.post("/run-new")
-async def run_new_case(
-    case_id: str = Form(""),
-    clinical_summary: str = Form(""),
-    hpo_terms: str = Form(""),
-    variants: str = Form(""),
-    vcf: UploadFile | None = File(None),
-):
-    """Accept a researcher-submitted UNKNOWN case (multipart/form-data) and run the pipeline.
-
-    An optional VCF file is saved under data/uploads/ and its path is passed as vcf_path,
-    so the Intake agent parses it into variants. Returns the same result JSON shape as /run.
-    """
+def _sanitize_case_id(case_id: str) -> str:
+    """Sanitize a case_id for safe filesystem use (same scheme as the dossier PDF)."""
     cid = (case_id or "").strip()
     if not cid:
         cid = f"new-{int(time.time())}"
-    # Sanitize case_id for safe filesystem use (dossier PDF uses the same scheme).
-    cid = re.sub(r"[^A-Za-z0-9._-]", "-", cid)[:80] or f"new-{int(time.time())}"
+    return re.sub(r"[^A-Za-z0-9._-]", "-", cid)[:80] or f"new-{int(time.time())}"
 
-    parsed_hpo = _parse_hpo_terms(hpo_terms)
-    parsed_variants = _parse_variants(variants)
 
-    vcf_path: str | None = None
-    if vcf is not None and vcf.filename:
-        fname = vcf.filename
-        if not fname.lower().endswith((".vcf", ".vcf.gz")):
-            raise HTTPException(status_code=400,
-                                detail="VCF file must have a .vcf or .vcf.gz extension.")
-        safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", Path(fname).name)
-        dest = UPLOADS_DIR / f"{cid}_{int(time.time())}_{safe_name}"
-        size = 0
-        try:
-            with dest.open("wb") as out:
-                while True:
-                    chunk = await vcf.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    size += len(chunk)
-                    if size > MAX_VCF_BYTES:
-                        out.close()
-                        dest.unlink(missing_ok=True)
-                        raise HTTPException(
-                            status_code=413,
-                            detail=f"VCF too large (> {MAX_VCF_BYTES // (1024*1024)} MB).")
-                    out.write(chunk)
-        except HTTPException:
-            raise
-        except Exception as e:  # noqa: BLE001
-            dest.unlink(missing_ok=True)
-            raise HTTPException(status_code=400, detail=f"could not save VCF: {e}")
-        if size == 0:
-            dest.unlink(missing_ok=True)
-            raise HTTPException(status_code=400, detail="Uploaded VCF file is empty.")
-        vcf_path = str(dest)
+async def _save_vcf_upload(vcf: UploadFile, cid: str) -> str:
+    """Validate + stream-save an uploaded VCF under data/uploads/; return its path.
 
+    Shared by POST /run-new and POST /api/v1/analyze. Enforces extension (.vcf/.vcf.gz)
+    and the MAX_VCF_BYTES cap; raises HTTPException(400/413) on bad input.
+    """
+    fname = vcf.filename
+    if not fname.lower().endswith((".vcf", ".vcf.gz")):
+        raise HTTPException(status_code=400,
+                            detail="VCF file must have a .vcf or .vcf.gz extension.")
+    safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", Path(fname).name)
+    dest = UPLOADS_DIR / f"{cid}_{int(time.time())}_{safe_name}"
+    size = 0
+    try:
+        with dest.open("wb") as out:
+            while True:
+                chunk = await vcf.read(1024 * 1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_VCF_BYTES:
+                    out.close()
+                    dest.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"VCF too large (> {MAX_VCF_BYTES // (1024*1024)} MB).")
+                out.write(chunk)
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001
+        dest.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail=f"could not save VCF: {e}")
+    if size == 0:
+        dest.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail="Uploaded VCF file is empty.")
+    return str(dest)
+
+
+def _run_case_payload(cid: str, clinical_summary: str, parsed_hpo: list[str],
+                      parsed_variants: list[Variant], vcf_path: str | None) -> dict:
+    """Build a CaseInput, run the 8-agent pipeline, and return the result dict.
+
+    Adds ``variant_count`` (candidate variants + 1 if a VCF was supplied) so a
+    symptom-only submission can be distinguished from one with genomic input. Shared
+    by /run-new and /api/v1/analyze. Raises HTTPException(400/500) on failure.
+    """
     try:
         case = CaseInput(
             case_id=cid,
@@ -327,10 +481,33 @@ async def run_new_case(
         result = Coordinator().run(case)
     except Exception as e:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"pipeline error: {type(e).__name__}: {e}")
-    # Signal to the UI whether any genomic input (VCF or candidate variants) was provided,
-    # so a symptom-only submission can show an accurate empty-state instead of a bare "0".
     if isinstance(result, dict):
         result["variant_count"] = len(parsed_variants) + (1 if vcf_path else 0)
+    return result
+
+
+@app.post("/run-new")
+async def run_new_case(
+    case_id: str = Form(""),
+    clinical_summary: str = Form(""),
+    hpo_terms: str = Form(""),
+    variants: str = Form(""),
+    vcf: UploadFile | None = File(None),
+):
+    """Accept a researcher-submitted UNKNOWN case (multipart/form-data) and run the pipeline.
+
+    An optional VCF file is saved under data/uploads/ and its path is passed as vcf_path,
+    so the Intake agent parses it into variants. Returns the same result JSON shape as /run.
+    """
+    cid = _sanitize_case_id(case_id)
+    parsed_hpo = _parse_hpo_terms(hpo_terms)
+    parsed_variants = _parse_variants(variants)
+
+    vcf_path: str | None = None
+    if vcf is not None and vcf.filename:
+        vcf_path = await _save_vcf_upload(vcf, cid)
+
+    result = _run_case_payload(cid, clinical_summary, parsed_hpo, parsed_variants, vcf_path)
     return JSONResponse(result)
 
 
