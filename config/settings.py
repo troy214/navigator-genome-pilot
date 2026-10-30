@@ -44,7 +44,7 @@ def active_provider() -> dict:
             "name": "meta",
             "base_url": META_MODEL_API_BASE_URL,
             "api_key": META_MODEL_API_KEY,
-            "default_model": os.getenv("META_DEFAULT_MODEL", "muse-spark"),
+            "default_model": os.getenv("META_DEFAULT_MODEL", "muse-spark-1.3"),
         }
     return {
         "name": "dev",
