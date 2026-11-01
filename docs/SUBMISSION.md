@@ -15,7 +15,7 @@ An agentic research tool that reads a genome variant list and a patient's clinic
 ## Field: Links
 - **Live demo:** https://navigator-genome.abacusai.cloud
 - **Public repository:** https://github.com/troy214/navigator-genome-pilot
-- **3-minute demo video:** https://navigator-genome.abacusai.cloud/demo.mp4  _(2:42, publicly accessible; re-upload to YouTube/Vimeo if the submission form prefers it. v4: narration in the dossier-writer avatar voice; gentle cross-dissolves; original 2:42 pacing preserved.)_
+- **3-minute demo video:** https://youtu.be/PlMU0qrLrPY  _("NAVIGATOR PILOT / META MUSE", public on YouTube. Mirror/direct file: https://navigator-genome.abacusai.cloud/demo.mp4)_
 
 ## Field: Track / Theme
 Indie Developer track. Theme fit: **Build for Your World / Push the Frontier** — an agentic research-acceleration platform for rare-disease variant interpretation.
@@ -105,8 +105,10 @@ verified on the dev endpoint**:
 - All **8 agents** run end-to-end through the coordinator, with per-run persistence.
 - **Live** calls to Europe PMC, MyVariant, ClinVar, gnomAD, and HPO — real sources, no keys.
 - Real **PDF dossiers** generated for three solved cases.
-- **Benchmark: top-1 = 100%, top-5 = 100%** over three published, already-solved cases —
-  Cystic Fibrosis (CFTR / F508del), Sickle Cell (HBB), and PKU (PAH) — with answers hidden.
+- **Benchmark: top-1 = 100%, top-5 = 100%** over **15** published, already-solved cases
+  (CF/CFTR, DMD, FH/LDLR, HBOC/BRCA1, HD/HTT, HEMA/F8, MFS/FBN1, PKU/PAH, POMPE/GAA,
+  RETT/MECP2, SCD/HBB, SMA/SMN1, TSD/HEXA, VHL, Wilson/ATP7B) with answers hidden —
+  every expected gene ranked #1, across 66 real Meta Muse completions with zero failures.
 - **11 offline tests pass** (LLM + HTTP mocked), including the red-team isolation check and the
   absent-vs-benign rule.
 - **Live, public demo** and a **public GitHub repository**.
@@ -165,7 +167,7 @@ sourced, uncertainty-labeled evidence dossier** (PDF). Every claim is tagged
 Idea/Designed/Implemented/Verified or explicitly Unknown; absent database records are labeled
 *absent, not benign*; the system says when a source is down. It is **not a diagnostic system and
 gives no medical advice** — it is benchmarked only on already-solved public cases with the
-answer hidden (**top-1 100% / top-5 100%** on 3 cases). The heavy agents run on Meta's
+answer hidden (**top-1 100% / top-5 100%** on 15 cases). The heavy agents run on Meta's
 **open-weight** Muse Spark model; **AWS** is the backbone. Live:
 https://navigator-genome.abacusai.cloud · Repo:
 https://github.com/troy214/navigator-genome-pilot
