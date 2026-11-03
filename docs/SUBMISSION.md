@@ -109,7 +109,7 @@ verified on the dev endpoint**:
   (CF/CFTR, DMD, FH/LDLR, HBOC/BRCA1, HD/HTT, HEMA/F8, MFS/FBN1, PKU/PAH, POMPE/GAA,
   RETT/MECP2, SCD/HBB, SMA/SMN1, TSD/HEXA, VHL, Wilson/ATP7B) with answers hidden —
   every expected gene ranked #1, across 66 real Meta Muse completions with zero failures.
-- **11 offline tests pass** (LLM + HTTP mocked), including the red-team isolation check and the
+- **77 offline tests pass** (LLM + HTTP mocked), including the red-team isolation check and the
   absent-vs-benign rule.
 - **Live, public demo** and a **public GitHub repository**.
 
