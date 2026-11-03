@@ -4,7 +4,7 @@ Tracked with the same four categories Navigator enforces (Idea / Designed / Impl
 Verified), plus explicit Unknown. "Verified" means it was actually run successfully in this
 environment on the dev provider — NOT that it is validated against the production Meta models.
 
-_Last updated: Oct 27, 2026 (billing resolved; live demo now runs on the Meta Model API — `muse-spark-1.3`; **benchmark expanded 3 → 15 solved public cases and re-run on Meta: top-1=100% (15/15), top-5=100% (15/15)**)._
+_Last updated: Nov 3, 2026 (**open-weight routing verified**: intake/filtering/database now run on Meta open-weight `muse-spark-1.3-contributor`, five agents stay on `muse-spark-1.3`; full 15-case benchmark re-run under this mixed routing on the Meta Model API: **63/63 real completions, top-1=100% (15/15), top-5=100% (15/15)**). Prior: Oct 27, 2026 (billing resolved; benchmark expanded 3 → 15 cases, re-run on Meta)._
 
 | Component | Category | Evidence |
 |-----------|----------|----------|
@@ -25,10 +25,11 @@ _Last updated: Oct 27, 2026 (billing resolved; live demo now runs on the Meta Mo
 | Demo web app | **Verified** | agent board + evidence ledger + dossier view; run + PDF download work |
 | Public hosting | **Verified** | live at https://navigator-genome.abacusai.cloud (nginx + systemd), crawl-verified |
 | Public GitHub repo (hackathon req) | **Verified** | published public at https://github.com/troy214/navigator-genome-pilot (main, 9 commits, 67 files, no secrets) |
-| Offline test suite | **Verified** | 11 tests pass with LLM + HTTP mocked (`pytest`) |
+| Offline test suite | **Verified** | 77 tests pass with LLM + HTTP mocked (`pytest`) |
 | Meta Model API — key + catalog | **Verified** | Troy's key authenticates to `https://api.meta.ai/v1`; `GET /models` returns the live catalog; real model id is `muse-spark-1.3` (placeholders `muse-spark`/`muse-spark-open-1026` were wrong and are now corrected in `config/agents.yaml`) |
 | Meta Model API — live inference | **Verified** | billing resolved; live service runs `PROVIDER=meta` on `muse-spark-1.3`. Real chat completions succeed; `/lab-data` serves 8 agents on Meta. |
 | Benchmark on Meta models | **Verified** | **expanded to 15 solved public cases and re-run 2026-10-27 on Meta (`muse-spark-1.3`): top-1=100% (15/15), top-5=100% (15/15)**; `benchmarks/results/scores.json` shows `provider: meta` for every case, and a persisted run (`data/runs/WILSON-ATP7B-H1069Q_*`) records `provider: meta`. See case list below. |
+| Open-weight routing (bonus) | **Verified** | intake/filtering/database routed to open-weight `muse-spark-1.3-contributor` (config/agents.yaml); full 15-case benchmark re-run 2026-11-03 under this routing: 63/63 real Meta completions, top-1=100%, top-5=100% (`benchmarks/results/scores_meta.json`, `report_meta.md`) |
 | AWS deployment (prod backbone) | **Designed** | documented in `infra/aws/`; dev demo runs on this VM, not AWS yet |
 | S3 dossier storage | **Designed** | destination computed + documented; upload code is a TODO pending bucket |
 
