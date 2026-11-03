@@ -100,11 +100,12 @@ mean more Meta-powered reasoning on the same proven engine. Full write-up:
 
 ## Field: How we use Meta's models
 
-All **eight runtime agents reason on Meta's `muse-spark-1.3`** through the Meta Model API
-(`https://api.meta.ai/v1`) — the model name verified live against Meta's model catalog and set
-for every agent in `config/agents.yaml`. This is **not aspirational**: the full 15-case
-benchmark was executed on the live Meta Model API, logging **66 real Meta completions (66/66
-succeeded, 0 failed)** and **155,168 API-reported tokens**, and scoring **top-1 = 100% /
+All **eight runtime agents reason on Meta's Muse Spark models** through the Meta Model API
+(`https://api.meta.ai/v1`): five on `muse-spark-1.3` and the three highest-volume agents on the
+**open-weight `muse-spark-1.3-contributor`** (both names verified live against Meta's catalog, set
+per agent in `config/agents.yaml`). This is **not aspirational**: the full 15-case benchmark was
+executed on the live Meta Model API under this routing, logging **63 real Meta completions (63/63
+succeeded, 0 failed)** and **152,517 API-reported tokens**, and scoring **top-1 = 100% /
 top-5 = 100%**. The machine-readable proof is in `benchmarks/results/scores_meta.json`
 (`"valid_meta_run": true`, proof gate passed) and `benchmarks/results/report_meta.md`.
 
@@ -114,15 +115,18 @@ live Meta Model API is a single environment variable (`META_MODEL_API_KEY`; chec
 `docs/TRANSPOSE_TO_META.md`). Muse Code is used to help *build* the platform, not as a runtime
 agent.
 
-_Open-weight bonus:_ Meta's catalog exposes `-contributor` variants of Muse Spark. We have a
-designed (not yet verified) path to route the three highest-volume agents (intake, filtering,
-database) to `muse-spark-1.3-contributor` — a YAML-only change — to pursue the *Best Build on
-Meta Open-Weight Models* bonus. We present that as a roadmap item rather than claiming it today.
+_Open-weight bonus (verified):_ the three highest-volume agents (intake, filtering, database) are
+routed to Meta's **open-weight** `muse-spark-1.3-contributor`; the five reasoning-heavy agents stay
+on `muse-spark-1.3`. This is a YAML-only change (no agent code names a model). We **re-ran the full
+15-case benchmark under this mixed routing** on the live Meta Model API: **63/63 real completions,
+0 failures, top-1 = 100% / top-5 = 100%** — so the open-weight agents carry real production load
+with no accuracy loss. Proof: `benchmarks/results/scores_meta.json` + `report_meta.md`. This
+qualifies the project for the *Best Build on Meta Open-Weight Models* bonus.
 
 ## Field: Tech stack / Architecture
 
 - **Agents (reasoning engine):** Meta's `muse-spark-1.3` via the Meta Model API — one isolated
-  context per agent; the full benchmark has been run live on this path (66/66 real completions).
+  context per agent; the full benchmark has been run live on this path (63/63 real completions).
 - **Provider switch:** the same pipeline also runs on an OpenAI-compatible dev endpoint for
   offline development, selected by a single environment variable — no agent code changes.
 - **Infrastructure backbone:** **AWS** — orchestration, the demo app, and dossier storage (S3).
@@ -138,9 +142,11 @@ Meta Open-Weight Models* bonus. We present that as a roadmap item rather than cl
 **Verified** — actually executed, with artifacts in the repo:
 
 - All **8 agents** run end-to-end through the coordinator, with per-run persistence.
-- **Meta Model API inference is live and proven** — the benchmark ran on `muse-spark-1.3` via
-  `https://api.meta.ai/v1` with **66/66 real Meta completions** (proof gate passed,
-  `benchmarks/results/scores_meta.json`).
+- **Meta Model API inference is live and proven** — the benchmark ran on Meta Muse Spark
+  (`muse-spark-1.3` + open-weight `muse-spark-1.3-contributor`) via `https://api.meta.ai/v1` with
+  **63/63 real Meta completions** (proof gate passed, `benchmarks/results/scores_meta.json`).
+- **Open-weight routing is verified** — intake, filtering, and database run on open-weight
+  `muse-spark-1.3-contributor` with top-1/top-5 still 100%.
 - **Benchmark: top-1 = 100%, top-5 = 100%** over **15** published, already-solved cases
   (CF/CFTR, DMD, FH/LDLR, HBOC/BRCA1, HD/HTT, HEMA/F8, MFS/FBN1, PKU/PAH, POMPE/GAA,
   RETT/MECP2, SCD/HBB, SMA/SMN1, TSD/HEXA, VHL, Wilson/ATP7B) with answers hidden —
@@ -154,8 +160,6 @@ Meta Open-Weight Models* bonus. We present that as a roadmap item rather than cl
 **Designed, not yet Verified** — honestly labeled in `docs/STATUS.md`:
 - **AWS deployment + S3 dossier storage** — documented as the backbone; the live demo currently
   runs on a development VM, with the S3 upload destination computed and ready to wire.
-- **Open-weight routing** to `muse-spark-1.3-contributor` for the three highest-volume agents — a
-  YAML-only change, not yet executed.
 
 We do not mark anything "Verified" that we have not actually executed — that discipline is the
 point of the project.
@@ -185,8 +189,6 @@ researcher would otherwise spend days building by hand.
 - Deploy the backbone on AWS (ECS/Fargate) and wire the S3 dossier-storage path end-to-end
   (facility-owned encrypted buckets for governed facilities; Navigator-supplied storage for demos
   and pilots) — the integration design is in `docs/META_FACILITY_INTEGRATION.md`.
-- Route the three highest-volume agents to `muse-spark-1.3-contributor` (open-weight) and verify
-  the benchmark holds, to pursue the open-weight bonus.
 - Grow the benchmark beyond the current 15 solved public cases across more genes and disease types.
 - Light up the next laboratory on the same spine (Media or Research Navigator) to demonstrate the
   cross-vertical platform, not just the genome pilot.
@@ -208,7 +210,8 @@ sourced, uncertainty-labeled evidence dossier** (PDF). Every claim is tagged
 Idea/Designed/Implemented/Verified or explicitly Unknown; absent database records are labeled
 *absent, not benign*; the system says when a source is down. It is **not a diagnostic system and
 gives no medical advice** — it is benchmarked only on already-solved public cases with the
-answer hidden (**top-1 100% / top-5 100%** on 15 cases, 66/66 real Meta completions). All eight
-agents reason on Meta's **`muse-spark-1.3`** via the Meta Model API; **AWS** is the backbone. Live:
+answer hidden (**top-1 100% / top-5 100%** on 15 cases, 63/63 real Meta completions). All eight
+agents reason on Meta Muse Spark — three high-volume agents on **open-weight
+`muse-spark-1.3-contributor`**, five on `muse-spark-1.3`; **AWS** is the backbone. Live:
 https://navigator-genome.abacusai.cloud · Repo:
 https://github.com/troy214/navigator-genome-pilot

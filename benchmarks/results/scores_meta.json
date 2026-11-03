@@ -1,13 +1,13 @@
 {
-  "generated": "2026-10-30T17:26:59.473343+00:00",
+  "generated": "2026-11-03T04:26:34.231518+00:00",
   "provider": "meta",
-  "model_id": "muse-spark-1.3",
+  "model_id": "muse-spark-1.3-contributor",
   "base_url": "https://api.meta.ai/v1",
   "valid_meta_run": true,
   "proof_gate": {
     "rule": "real Meta completions succeeded > 0",
     "passed": true,
-    "succeeded": 66,
+    "succeeded": 63,
     "expected_min_if_meta": 15
   },
   "n_cases": 15,
@@ -15,21 +15,21 @@
   "top1_hit_rate": 1.0,
   "top5_hit_rate": 1.0,
   "meta_completions": {
-    "attempted": 66,
-    "succeeded": 66,
+    "attempted": 63,
+    "succeeded": 63,
     "failed": 0,
     "error_classes": {}
   },
   "tokens": {
     "usage_reported_by_api": true,
-    "prompt_tokens": 31513,
-    "completion_tokens": 123655,
-    "total_tokens": 155168
+    "prompt_tokens": 30500,
+    "completion_tokens": 122017,
+    "total_tokens": 152517
   },
   "latency": {
-    "total_model_latency_s": 680.805,
-    "total_wall_clock_s": 693.411,
-    "mean_model_latency_per_call_s": 10.315
+    "total_model_latency_s": 988.074,
+    "total_wall_clock_s": 997.715,
+    "mean_model_latency_per_call_s": 15.684
   },
   "per_case": {
     "CF-CFTR-F508del": {
@@ -45,7 +45,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 9423
+        "total_tokens": 7746
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -63,7 +63,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 10118
+        "total_tokens": 8907
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -81,7 +81,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 10487
+        "total_tokens": 10781
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -99,7 +99,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 9504
+        "total_tokens": 10388
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -117,7 +117,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 10137
+        "total_tokens": 10980
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -135,7 +135,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 9718
+        "total_tokens": 10493
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -153,7 +153,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 9801
+        "total_tokens": 10038
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -163,19 +163,17 @@
       "top5": true,
       "expected_gene": "PAH",
       "ranked_genes": [
-        "PAH",
-        "HEXA",
-        "MECP2"
+        "PAH"
       ],
       "provider": "meta",
       "sources_unavailable": [],
       "meta_calls": {
-        "attempted": 6,
-        "succeeded": 6,
+        "attempted": 4,
+        "succeeded": 4,
         "failed": 0,
-        "total_tokens": 11252
+        "total_tokens": 8755
       },
-      "agents_real_meta": 6,
+      "agents_real_meta": 4,
       "agents_degraded": 0
     },
     "POMPE-GAA-IVS1": {
@@ -192,7 +190,7 @@
         "attempted": 5,
         "succeeded": 5,
         "failed": 0,
-        "total_tokens": 11133
+        "total_tokens": 11736
       },
       "agents_real_meta": 5,
       "agents_degraded": 0
@@ -211,7 +209,7 @@
         "attempted": 5,
         "succeeded": 5,
         "failed": 0,
-        "total_tokens": 11755
+        "total_tokens": 10826
       },
       "agents_real_meta": 5,
       "agents_degraded": 0
@@ -229,7 +227,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 9429
+        "total_tokens": 9003
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -239,18 +237,17 @@
       "top5": true,
       "expected_gene": "SMN1",
       "ranked_genes": [
-        "SMN1",
-        "DMD"
+        "SMN1"
       ],
       "provider": "meta",
       "sources_unavailable": [],
       "meta_calls": {
-        "attempted": 5,
-        "succeeded": 5,
+        "attempted": 4,
+        "succeeded": 4,
         "failed": 0,
-        "total_tokens": 10635
+        "total_tokens": 8984
       },
-      "agents_real_meta": 5,
+      "agents_real_meta": 4,
       "agents_degraded": 0
     },
     "TSD-HEXA-1278insTATC": {
@@ -267,7 +264,7 @@
         "attempted": 5,
         "succeeded": 5,
         "failed": 0,
-        "total_tokens": 11197
+        "total_tokens": 10754
       },
       "agents_real_meta": 5,
       "agents_degraded": 0
@@ -285,7 +282,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 10235
+        "total_tokens": 11090
       },
       "agents_real_meta": 4,
       "agents_degraded": 0
@@ -303,7 +300,7 @@
         "attempted": 4,
         "succeeded": 4,
         "failed": 0,
-        "total_tokens": 10344
+        "total_tokens": 12036
       },
       "agents_real_meta": 4,
       "agents_degraded": 0

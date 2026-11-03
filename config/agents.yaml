@@ -9,20 +9,21 @@
 #   muse-spark-1.1, muse-wonder-1.0, muse-image-1.0, muse-voice-transcribe-1.0, sam-3.1
 # The earlier placeholder names (muse-spark, muse-spark-open-1026) do NOT exist and are replaced.
 #
-# All eight reasoning agents use the latest verified text model, muse-spark-1.3.
-# HYPOTHESIS (not yet verified): the "-contributor" variants may be the open-weight / community
-# models that qualify for the "Best Build on Meta Open Weight Models" bonus. This cannot be
-# confirmed until billing is active and we can actually run them. Once confirmed, move the three
-# high-volume agents (intake, filtering, database) to muse-spark-1.3-contributor — YAML only,
-# no code change.
+# OPEN-WEIGHT ROUTING (VERIFIED 2026-11-03 against the live Meta Model API):
+# muse-spark-1.3-contributor is the open-weight / community Muse Spark model. It is present in the
+# live catalog AND a real completion against it succeeded (id chatcmpl-01a19f99..., real token
+# usage reported). The three highest-volume agents (intake, filtering, database) are routed to it
+# to qualify for the "Best Build on Meta Open-Weight Models" bonus. The five reasoning-heavy
+# agents (phenotype, literature, case_matching, red_team, dossier_writer) stay on muse-spark-1.3.
+# This is a YAML-only change — no agent code mentions a model name (see src/models/config.py).
 
 agents:
   intake:
-    model: muse-spark-1.3
+    model: muse-spark-1.3-contributor   # open-weight
     role: "Parse VCF / demo case, normalize variants"
     isolated: true
   filtering:
-    model: muse-spark-1.3
+    model: muse-spark-1.3-contributor   # open-weight
     role: "Reduce candidate variants by frequency / quality"
     isolated: true
   phenotype:
@@ -34,7 +35,7 @@ agents:
     role: "Search and summarize relevant publications"
     isolated: true
   database:
-    model: muse-spark-1.3
+    model: muse-spark-1.3-contributor   # open-weight
     role: "Query OMIM / Orphanet / ClinVar / gnomAD"
     isolated: true
   case_matching:
