@@ -15,7 +15,7 @@ An agentic research tool that reads a genome variant list and a patient's clinic
 ## Field: Links
 - **Live demo:** https://navigator-genome.abacusai.cloud
 - **Public repository:** https://github.com/troy214/navigator-genome-pilot
-- **3-minute demo video:** https://youtu.be/PlMU0qrLrPY  _("NAVIGATOR PILOT / META MUSE", public on YouTube. Mirror/direct file: https://navigator-genome.abacusai.cloud/demo.mp4)_
+- **3-minute demo video:** https://youtu.be/PlMU0qrLrPY  _("NAVIGATOR PILOT / META MUSE", public on YouTube)_
 
 ## Field: Track / Theme
 Indie Developer track. Theme fit: **Build for Your World / Push the Frontier** — an agentic research-acceleration platform for rare-disease variant interpretation.
