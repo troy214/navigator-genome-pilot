@@ -26,8 +26,10 @@ specialized agents independently investigate the case and a coordinator assemble
 uncertainty-labeled **evidence dossier** (rendered to PDF). The pilot is scored on
 already-solved public benchmark cases (answer hidden) for top-1 / top-5 hit rate.
 
-Current benchmark (dev endpoint): **top-1 = 100%, top-5 = 100%** over 3 solved cases
-(CFTR / HBB / PAH). See `benchmarks/results/report.md`.
+Current benchmark (Meta Muse `muse-spark-1.3`): **top-1 = 100%, top-5 = 100%** over 15 solved
+cases (CF/CFTR, DMD, FH/LDLR, HBOC/BRCA1, HD/HTT, HEMA/F8, MFS/FBN1, PKU/PAH, POMPE/GAA,
+RETT/MECP2, SCD/HBB, SMA/SMN1, TSD/HEXA, VHL, Wilson/ATP7B) — every expected gene ranked #1
+across 66 real Meta completions, zero failures. See `benchmarks/results/report_meta.md`.
 
 ## The 8-agent pilot
 
@@ -66,7 +68,7 @@ The model client reads its provider from `config/settings.py` + environment:
 - **No `META_MODEL_API_KEY` set →** provider `dev`: base_url `https://routellm.abacus.ai/v1`,
   key from `$ABACUS_API_KEY`, model `gpt-5.4-mini` (`config/models.dev.yaml`).
 - **`META_MODEL_API_KEY` set →** provider `meta`: Meta Model API, agent→model map from
-  `config/agents.yaml` (`muse-spark` / `muse-spark-open-1026`).
+  `config/agents.yaml` (all eight agents on `muse-spark-1.3`, the verified Meta Model API text model).
 
 **To transpose to Meta: set one env var.**
 
